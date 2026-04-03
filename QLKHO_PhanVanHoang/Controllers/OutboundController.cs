@@ -56,7 +56,9 @@ namespace QLKHO_PhanVanHoang.Controllers
             var result = await _unitOfWork.DeliveryVouchers.GetPagedAsync(1, 1, v => v.Id == id, null, "Warehouse,Customer,Details.Product");
             var item = result.Items.FirstOrDefault();
             if (item == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy phiếu xuất."));
-            return Ok(ApiResponse<DeliveryVoucher>.SuccessResult(item));
+            
+            var dto = _mapper.Map<DeliveryVoucherDto>(item);
+            return Ok(ApiResponse<DeliveryVoucherDto>.SuccessResult(dto));
         }
 
         [Authorize(Roles = "Admin,WarehouseManager,Employee")]

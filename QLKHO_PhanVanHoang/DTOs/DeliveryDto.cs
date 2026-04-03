@@ -16,6 +16,7 @@ namespace QLKHO_PhanVanHoang.DTOs
         public int ProductId { get; set; }
         public string? LotNumber { get; set; }
         public decimal Quantity { get; set; }
+        public decimal? SellingPrice { get; set; }
     }
 
     public class DeliveryVoucherDto
@@ -23,8 +24,24 @@ namespace QLKHO_PhanVanHoang.DTOs
         public int Id { get; set; }
         public string Code { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
+        public int WarehouseId { get; set; }
         public string WarehouseName { get; set; } = string.Empty;
+        public int? CustomerId { get; set; }
         public string CustomerName { get; set; } = string.Empty;
         public System.DateTime DeliveryDate { get; set; }
+        public string? Notes { get; set; }
+        public decimal TotalAmount { get; set; }
+        public List<DeliveryVoucherDetailDto> Details { get; set; } = new List<DeliveryVoucherDetailDto>();
+    }
+
+    public class DeliveryVoucherDetailDto
+    {
+        public int Id { get; set; }
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public string ProductCode { get; set; } = string.Empty;
+        public string? LotNumber { get; set; }
+        public decimal Quantity { get; set; }
+        public decimal? SellingPrice { get; set; }
     }
 }

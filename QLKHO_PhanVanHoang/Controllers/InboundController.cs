@@ -32,22 +32,33 @@ namespace QLKHO_PhanVanHoang.Controllers
         public async Task<IActionResult> GetPaged([FromQuery] PaginationParams @params)
         {
             var result = await _unitOfWork.ReceivingVouchers.GetPagedAsync(
-                @params.PageNumber, 
+                @params.PageNumber,
                 @params.PageSize,
                 v => string.IsNullOrEmpty(@params.SearchTerm) || v.Code.Contains(@params.SearchTerm),
-                null,
-                "Warehouse");
+                v => v.OrderByDescending(x => x.ReceivingDate),
+                "Warehouse,Supplier,Details");
+
+            var dtos = _mapper.Map<IEnumerable<ReceivingVoucherDto>>(result.Items);
             
-            return Ok(ApiResponse<PagedResult<ReceivingVoucher>>.SuccessResult(result));
+            return Ok(ApiResponse<PagedResult<ReceivingVoucherDto>>.SuccessResult(new PagedResult<ReceivingVoucherDto>
+            {
+                Items = dtos,
+                PageNumber = result.PageNumber,
+                PageSize = result.PageSize,
+                TotalCount = result.TotalCount,
+                TotalPages = result.TotalPages
+            }));
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var result = await _unitOfWork.ReceivingVouchers.GetPagedAsync(1, 1, v => v.Id == id, null, "Warehouse,Supplier,Details.Product");
-            var item = result.Items.FirstOrDefault();
+            var res = await _unitOfWork.ReceivingVouchers.GetPagedAsync(1, 1, v => v.Id == id, null, "Warehouse,Supplier,Details.Product");
+            var item = res.Items.FirstOrDefault();
             if (item == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy phiếu nhập."));
-            return Ok(ApiResponse<ReceivingVoucher>.SuccessResult(item));
+
+            var dto = _mapper.Map<ReceivingVoucherDto>(item);
+            return Ok(ApiResponse<ReceivingVoucherDto>.SuccessResult(dto));
         }
 
         [Authorize(Roles = "Admin,WarehouseManager,Employee")]

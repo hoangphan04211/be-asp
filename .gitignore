@@ -29,3 +29,6 @@ wwwroot/uploads/*
 
 ## Hangfire (nếu có lưu file)
 .hangfire/
+
+## Frontend (quản lý riêng, không push cùng backend)
+frontend-wms/

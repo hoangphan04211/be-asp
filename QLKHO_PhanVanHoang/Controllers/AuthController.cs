@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -110,6 +111,26 @@ namespace QLKHO_PhanVanHoang.Controllers
                 $"<h3>Chào {user.FullName},</h3><p>Mã khôi phục mật khẩu của bạn là: <b>{resetCode}</b></p><p>Mã có hiệu lực trong 15 phút.</p>");
 
             return Ok(ApiResponse<object>.SuccessResult(null, "Mã khôi phục đã được gửi về Email của bạn."));
+        }
+
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetProfile()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var user = await _unitOfWork.SystemUsers.GetByIdAsync(userId);
+            if (user == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy người dùng"));
+
+            var role = await _unitOfWork.Roles.GetByIdAsync(user.RoleId);
+
+            return Ok(ApiResponse<object>.SuccessResult(new
+            {
+                user.Id,
+                user.Username,
+                user.FullName,
+                user.Email,
+                RoleName = role?.Name ?? "Employee"
+            }));
         }
 
         [HttpPost("reset-password")]

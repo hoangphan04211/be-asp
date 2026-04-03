@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using QLKHO_PhanVanHoang.Models.Common;
@@ -27,10 +27,12 @@ namespace QLKHO_PhanVanHoang.Models
         public string? LotNumber { get; set; }  // Lô hàng nào
 
         [Required]
-        public int OldQuantity { get; set; }  // Số lượng cũ
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal OldQuantity { get; set; }  // Số lượng cũ
 
         [Required]
-        public int NewQuantity { get; set; }  // Số lượng mới
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal NewQuantity { get; set; }  // Số lượng mới
 
         [MaxLength(500)]
         public string? Reason { get; set; }  // Lý do điều chỉnh

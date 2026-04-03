@@ -32,7 +32,7 @@ namespace QLKHO_PhanVanHoang.Services
                 {
                     if (detail.ActualQuantity == null) continue;
 
-                    int diff = (int)detail.ActualQuantity - detail.SystemQuantity;
+                    decimal diff = (decimal)detail.ActualQuantity - detail.SystemQuantity;
                     if (diff == 0) continue;
 
                     // 1. Lưu vết điều chỉnh
@@ -45,7 +45,7 @@ namespace QLKHO_PhanVanHoang.Services
                         WarehouseId = sheet.WarehouseId,
                         LotNumber = detail.LotNumber,
                         OldQuantity = detail.SystemQuantity,
-                        NewQuantity = (int)detail.ActualQuantity,
+                        NewQuantity = (decimal)detail.ActualQuantity,
                         Reason = "Điều chỉnh sau kiểm kê",
                         Status = "Approved",
                         ApprovedAt = DateTime.Now

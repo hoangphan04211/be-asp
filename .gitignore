@@ -1,0 +1,31 @@
+## [Sử dụng cho .NET Core]
+## Các thư mục Build & Binaries
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+BuildLog.netlog
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Cấu hình nhạy cảm (User Secrets / AppSettings thực tế)
+# Chặn push mật khẩu thật lên Git
+appsettings.json
+!appsettings.Example.json
+appsettings.Development.json
+
+## Logs & Temp files
+logs/
+*.log
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep
+
+## Hangfire (nếu có lưu file)
+.hangfire/

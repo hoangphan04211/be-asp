@@ -112,7 +112,7 @@ Dưới đây là chi tiết các thành phần cấu thành nên hệ thống "
 
 ## ✍️ Tác giả & Đóng góp
 - **Chủ dự án:** Phan Van Hoang
-- **Email:** hoangpv@example.com
+- **Email:** phan21828@gmail.com
 
 ---
 *Dự án này được xây dựng với tâm thế mang lại giá trị thực tế nhất cho quy trình quản lý kho hiện đại.*

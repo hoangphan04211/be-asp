@@ -3,16 +3,19 @@ using System.Linq;
 using System.Threading.Tasks;
 using QLKHO_PhanVanHoang.Models;
 using QLKHO_PhanVanHoang.Repositories;
+using QLKHO_PhanVanHoang.Hubs;
 
 namespace QLKHO_PhanVanHoang.Services
 {
     public class InventoryService : IInventoryService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationService _notificationService;
 
-        public InventoryService(IUnitOfWork unitOfWork)
+        public InventoryService(IUnitOfWork unitOfWork, INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
         }
 
         public async Task IncreaseInventoryAsync(int productId, int warehouseId, string? lotNumber, decimal quantity, decimal costPrice, string referenceCode)
@@ -102,6 +105,19 @@ namespace QLKHO_PhanVanHoang.Services
                 Notes = $"Xuất kho từ phiếu {referenceCode}"
             };
             await _unitOfWork.StockCards.AddAsync(stockCard);
+
+            // Kiểm tra ngưỡng tồn kho tối thiểu sau khi xuất
+            var product = await _unitOfWork.Products.GetByIdAsync(productId);
+            if (product != null)
+            {
+                var productInventories = await _unitOfWork.Inventories.FindAsync(i => i.ProductId == productId);
+                var totalStock = productInventories.Sum(i => i.QuantityOnHand);
+                if (totalStock <= product.MinStockLevel)
+                {
+                    await _notificationService.SendNotificationToAllAsync("⚠️ Cảnh báo tồn kho", 
+                        $"Sản phẩm '{product.Name}' ({product.SkuCode}) đang dưới ngưỡng tồn tối thiểu! Tồn hiện tại: {totalStock}");
+                }
+            }
         }
     }
 }

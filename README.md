@@ -69,6 +69,14 @@ Dưới đây là chi tiết các thành phần cấu thành nên hệ thống "
     - *Chức năng:* Lưu trữ tài nguyên tĩnh.
     - *Chi tiết:* Nơi lưu trữ hình ảnh sản phẩm được tải lên từ hệ thống.
 
+13. **`Hubs/` (SignalR Layer)**
+    - *Chức năng:* Quản lý các kết nối thời gian thực thông qua WebSockets.
+    - *Chi tiết:* `NotificationHub` xử lý việc gửi thông báo tức thì (Low Stock, Success alerts) từ Server tới Client.
+
+14. **`QLKHO_PhanVanHoang.Tests/` (Unit Testing Project)**
+    - *Chức năng:* Kiểm thử tự động đảm bảo chất lượng phần mềm.
+    - *Chi tiết:* Sử dụng **xUnit** và **Moq** để kiểm tra các logic nghiệp vụ cốt lõi của Service mà không cần Database thật.
+
 ---
 
 ## 🛠️ Tính năng & Công nghệ (Features & Technologies)
@@ -79,11 +87,16 @@ Dưới đây là chi tiết các thành phần cấu thành nên hệ thống "
 - **Thẻ kho (Stock Card):** Truy vết lịch sử xuất nhập kho 100% không sai lệch.
 - **Hệ thống Kiểm soát (Audit Log):** Ghi lại mọi hành động thay đổi dữ liệu (Ai thay đổi, Giá trị cũ/mới).
 - **Phân quyền (RBAC):** Admin (Toàn quyền), WarehouseManager (Quản lý), Employee (Thực thi).
+- **Thông báo thời gian thực:** Cảnh báo tồn kho thấp và thông báo thành công qua **SignalR**.
+- **Bảo mật nâng cao:** 
+    - Cơ chế **Refresh Token** giúp duy trì phiên làm việc an toàn.
+    - Tính năng **Quên mật khẩu** bằng mã xác thực 6 chữ số gửi qua Email.
 
 ### Công nghệ lõi
 - **Core:** .NET 8.0, EF Core 8
-- **Security:** JWT Identity, BCrypt Password Hashing
-- **Performance:** Hangfire Server, Static File Serving
+- **Security:** JWT Identity, Refresh Token, BCrypt Password Hashing
+- **Performance:** Hangfire Server, SignalR (WebSockets)
+- **Quality:** xUnit, Moq (Unit Testing)
 - **Docs:** Swagger UI (OpenAPI v3)
 
 ---

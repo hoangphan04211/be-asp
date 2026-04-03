@@ -9,6 +9,7 @@ using System.Text;
 using Serilog;
 using QLKHO_PhanVanHoang.Jobs;
 using QLKHO_PhanVanHoang.Middlewares;
+using QLKHO_PhanVanHoang.Hubs;
 using Hangfire;
 using FluentValidation.AspNetCore;
 using FluentValidation;
@@ -118,9 +119,12 @@ namespace QLKHO_PhanVanHoang
             builder.Services.AddScoped<IInboundService, InboundService>();
             builder.Services.AddScoped<IOutboundService, OutboundService>();
             builder.Services.AddScoped<IExcelService, ExcelService>();
-            builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<ITransferService, TransferService>();
             builder.Services.AddScoped<ICountingService, CountingService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+
+            // Cấu hình SignalR
+            builder.Services.AddSignalR();
 
             // Cấu hình Hangfire
             builder.Services.AddHangfire(config => config
@@ -216,6 +220,9 @@ namespace QLKHO_PhanVanHoang
                 "daily-inventory-check",
                 job => job.CheckExpiryAndLowStockAsync(),
                 Cron.Daily(23, 59));
+
+            // Map các hubs SignalR
+            app.MapHub<NotificationHub>("/notificationHub");
 
             // Map các controllers
             app.MapControllers();

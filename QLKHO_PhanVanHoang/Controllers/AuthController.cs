@@ -10,6 +10,8 @@ using QLKHO_PhanVanHoang.DTOs;
 using QLKHO_PhanVanHoang.Repositories;
 using System.Linq;
 using QLKHO_PhanVanHoang.Helpers;
+using System.Security.Cryptography;
+using QLKHO_PhanVanHoang.Services;
 
 namespace QLKHO_PhanVanHoang.Controllers
 {
@@ -19,11 +21,13 @@ namespace QLKHO_PhanVanHoang.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _config;
+        private readonly IEmailService _emailService;
 
-        public AuthController(IUnitOfWork unitOfWork, IConfiguration config)
+        public AuthController(IUnitOfWork unitOfWork, IConfiguration config, IEmailService emailService)
         {
             _unitOfWork = unitOfWork;
             _config = config;
+            _emailService = emailService;
         }
 
         [HttpPost("login")]
@@ -40,15 +44,102 @@ namespace QLKHO_PhanVanHoang.Controllers
             var role = await _unitOfWork.Roles.GetByIdAsync(user.RoleId);
             var roleName = role?.Name ?? "Employee";
 
-            var tokenHandler = new JwtSecurityTokenHandler();
+            var accessToken = GenerateAccessToken(user, roleName);
+            var refreshToken = GenerateRefreshToken();
+
+            // Lưu Refresh Token vào User
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // Hết hạn sau 7 ngày
+            _unitOfWork.SystemUsers.Update(user);
+            await _unitOfWork.CompleteAsync();
+
+            return Ok(ApiResponse<LoginResponseDto>.SuccessResult(new LoginResponseDto
+            {
+                Token = accessToken,
+                RefreshToken = refreshToken,
+                FullName = user.FullName,
+                Role = roleName
+            }, "Đăng nhập thành công"));
+        }
+
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto requestDto)
+        {
+            var principal = GetPrincipalFromExpiredToken(requestDto.AccessToken);
+            if (principal == null) return BadRequest(ApiResponse<object>.FailureResult("Token không hợp lệ"));
+
+            string username = principal.Identity?.Name ?? "";
+            var user = (await _unitOfWork.SystemUsers.FindAsync(u => u.Username == username)).FirstOrDefault();
+
+            if (user == null || user.RefreshToken != requestDto.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            {
+                return BadRequest(ApiResponse<object>.FailureResult("Refresh Token không hợp lệ hoặc đã hết hạn"));
+            }
+
+            var role = await _unitOfWork.Roles.GetByIdAsync(user.RoleId);
+            var newAccessToken = GenerateAccessToken(user, role?.Name ?? "Employee");
+            var newRefreshToken = GenerateRefreshToken();
+
+            user.RefreshToken = newRefreshToken;
+            _unitOfWork.SystemUsers.Update(user);
+            await _unitOfWork.CompleteAsync();
+
+            return Ok(ApiResponse<TokenResponseDto>.SuccessResult(new TokenResponseDto
+            {
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshToken
+            }));
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto dto)
+        {
+            var user = (await _unitOfWork.SystemUsers.FindAsync(u => u.Email == dto.Email)).FirstOrDefault();
+            if (user == null) return BadRequest(ApiResponse<object>.FailureResult("Email không tồn tại trong hệ thống"));
+
+            // Tạo mã 6 chữ số
+            var resetCode = new Random().Next(100000, 999999).ToString();
+            user.ResetPasswordCode = resetCode;
+            user.ResetPasswordExpiry = DateTime.UtcNow.AddMinutes(15); // Hết hạn sau 15p
+
+            _unitOfWork.SystemUsers.Update(user);
+            await _unitOfWork.CompleteAsync();
+
+            // Gửi qua Email
+            await _emailService.SendEmailAsync(user.Email!, "Mã khôi phục mật khẩu WMS", 
+                $"<h3>Chào {user.FullName},</h3><p>Mã khôi phục mật khẩu của bạn là: <b>{resetCode}</b></p><p>Mã có hiệu lực trong 15 phút.</p>");
+
+            return Ok(ApiResponse<object>.SuccessResult(null, "Mã khôi phục đã được gửi về Email của bạn."));
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto dto)
+        {
+            var user = (await _unitOfWork.SystemUsers.FindAsync(u => u.Email == dto.Email)).FirstOrDefault();
+            if (user == null || user.ResetPasswordCode != dto.ResetCode || user.ResetPasswordExpiry <= DateTime.UtcNow)
+            {
+                return BadRequest(ApiResponse<object>.FailureResult("Mã xác nhận không đúng hoặc đã hết hạn"));
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            user.ResetPasswordCode = null; // Xóa mã sau khi dùng
+            user.ResetPasswordExpiry = null;
+
+            _unitOfWork.SystemUsers.Update(user);
+            await _unitOfWork.CompleteAsync();
+
+            return Ok(ApiResponse<object>.SuccessResult(null, "Mật khẩu đã được cập nhật thành công"));
+        }
+
+        #region Helpers
+        private string GenerateAccessToken(Models.SystemUser user, string roleName)
+        {
             var keyStr = _config["Jwt:Key"];
-            if (string.IsNullOrEmpty(keyStr)) throw new Exception("Jwt:Key is missing in configuration.");
-            
-            var key = Encoding.ASCII.GetBytes(keyStr);
+            var key = Encoding.ASCII.GetBytes(keyStr!);
+            var tokenHandler = new JwtSecurityTokenHandler();
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
+                Subject = new ClaimsIdentity(new[] {
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new Claim(ClaimTypes.Name, user.Username),
                     new Claim(ClaimTypes.Role, roleName)
@@ -58,58 +149,35 @@ namespace QLKHO_PhanVanHoang.Controllers
                 Audience = _config["Jwt:Audience"],
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
-            
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var response = new LoginResponseDto 
-            { 
-                 Token = tokenHandler.WriteToken(token),
-                 FullName = user.FullName,
-                 Role = roleName
-            };
-            
-            return Ok(ApiResponse<LoginResponseDto>.SuccessResult(response, "Đăng nhập thành công"));
+            return tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequestDto registerDto)
+        private string GenerateRefreshToken()
         {
-            var existingUsers = await _unitOfWork.SystemUsers.FindAsync(u => u.Username == registerDto.Username);
-            if (existingUsers.Any())
-            {
-                return BadRequest(ApiResponse<object>.FailureResult("Tên đăng nhập đã tồn tại"));
-            }
+            var randomNumber = new byte[32];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
 
-            int roleId = registerDto.RoleId;
-            if (roleId <= 0)
+        private ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
+        {
+            var tokenValidationParameters = new TokenValidationParameters
             {
-                var employeeRole = (await _unitOfWork.Roles.FindAsync(r => r.Name == "Employee")).FirstOrDefault();
-                if (employeeRole != null)
-                {
-                    roleId = employeeRole.Id;
-                }
-                else
-                {
-                    var newRole = new QLKHO_PhanVanHoang.Models.Role { Name = "Employee", Description = "Nhân viên kho" };
-                    await _unitOfWork.Roles.AddAsync(newRole);
-                    await _unitOfWork.CompleteAsync(); 
-                    roleId = newRole.Id;
-                }
-            }
-
-            var newUser = new QLKHO_PhanVanHoang.Models.SystemUser
-            {
-                Username = registerDto.Username,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password), 
-                FullName = registerDto.FullName,
-                Email = registerDto.Email,
-                RoleId = roleId,
-                IsActive = true
+                ValidateAudience = false,
+                ValidateIssuer = false,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!)),
+                ValidateLifetime = false // Quan trọng: cho phép lấy info từ token đã hết hạn
             };
 
-            await _unitOfWork.SystemUsers.AddAsync(newUser);
-            await _unitOfWork.CompleteAsync();
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
+            if (!(securityToken is JwtSecurityToken jwtSecurityToken) || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                return null;
 
-            return Ok(ApiResponse<object>.SuccessResult(new { UserId = newUser.Id }, "Đăng ký thành công! Bạn có thể dùng tài khoản này để Login."));
+            return principal;
         }
+        #endregion
     }
 }

@@ -27,5 +27,14 @@ namespace QLKHO_PhanVanHoang.Models
         public bool IsActive { get; set; } = true;
 
         public virtual Role? Role { get; set; }
+
+        // === FOR REFRESH TOKEN ===
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiryTime { get; set; }
+
+        // === FOR PASSWORD RESET (6-digit code) ===
+        [MaxLength(6)]
+        public string? ResetPasswordCode { get; set; }
+        public DateTime? ResetPasswordExpiry { get; set; }
     }
 }

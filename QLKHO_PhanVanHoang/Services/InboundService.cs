@@ -9,11 +9,13 @@ namespace QLKHO_PhanVanHoang.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IInventoryService _inventoryService;
+        private readonly INotificationService _notificationService;
 
-        public InboundService(IUnitOfWork unitOfWork, IInventoryService inventoryService)
+        public InboundService(IUnitOfWork unitOfWork, IInventoryService inventoryService, INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _inventoryService = inventoryService;
+            _notificationService = notificationService;
         }
 
         public async Task ApproveReceivingVoucherAsync(int voucherId)
@@ -38,6 +40,10 @@ namespace QLKHO_PhanVanHoang.Services
                 _unitOfWork.ReceivingVouchers.Update(voucher);
 
                 await _unitOfWork.CommitTransactionAsync();
+                
+                // Gửi thông báo SignalR thành công
+                await _notificationService.SendNotificationToAllAsync("✅ Nhập kho thành công", 
+                    $"Phiếu nhập {voucher.Code} đã được duyệt và cập nhật tồn kho.");
             }
             catch
             {

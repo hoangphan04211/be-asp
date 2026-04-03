@@ -401,15 +401,15 @@ dotnet test
         "DurationInMinutes": "120"
       },
       "EmailSettings": {
-        "SmtpServer": "smtp.gmail.com",
+        "SmtpServer": "smtp-relay.brevo.com",
         "Port": 587,
-        "SenderEmail": "your-email@gmail.com",
-        "SenderPassword": "your-app-password"
+        "SenderEmail": "your-verified-email@domain.com",
+        "SenderPassword": "your-brevo-api-key"
       }
     }
     ```
 3.  **Migration:** `dotnet ef database update`
-4.  **Running:** `dotnet run` → truy cập `https://localhost:xxxx/swagger`
+4.  **Running:** `dotnet run` → Truy cập Swagger UI tại: [http://localhost:9000/](http://localhost:9000/)
 
 ---
 

@@ -58,7 +58,7 @@ namespace QLKHO_PhanVanHoang
                     Contact = new OpenApiContact
                     {
                         Name = "Phan Văn Hoàng",
-                        Email = "hoangpv@example.com"
+                        Email = "phan21828@gmail.com"
                     }
                 });
 
@@ -122,6 +122,7 @@ namespace QLKHO_PhanVanHoang
             builder.Services.AddScoped<ITransferService, TransferService>();
             builder.Services.AddScoped<ICountingService, CountingService>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
 
             // Cấu hình SignalR
             builder.Services.AddSignalR();

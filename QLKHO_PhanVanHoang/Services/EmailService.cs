@@ -21,14 +21,15 @@ namespace QLKHO_PhanVanHoang.Services
 
         public async Task SendEmailAsync(string toEmail, string subject, string body)
         {
-            // Cấu hình mẫu (Mock / Dev log). Thực tế lấy từ appsettings.json SMTP
             var emailHost = _config["Smtp:Host"] ?? "smtp.gmail.com";
             var emailPort = int.Parse(_config["Smtp:Port"] ?? "587");
-            var emailUser = _config["Smtp:User"] ?? "your-email@gmail.com";
-            var emailPass = _config["Smtp:Pass"] ?? "your-app-password";
+            var emailUser = _config["Smtp:User"] ?? "";
+            var emailPass = _config["Smtp:Pass"] ?? "";
+            var senderEmail = _config["Smtp:SenderEmail"] ?? emailUser;
+            var senderName = _config["Smtp:SenderName"] ?? "Hệ thống WMS";
 
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Hệ thống WMS", "no-reply@wms.com"));
+            message.From.Add(new MailboxAddress(senderName, senderEmail));
             message.To.Add(new MailboxAddress("", toEmail));
             message.Subject = subject;
 

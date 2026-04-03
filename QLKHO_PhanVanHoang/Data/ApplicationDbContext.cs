@@ -94,22 +94,6 @@ namespace QLKHO_PhanVanHoang.Data
                 new Role { Id = 3, Name = "Employee", Description = "Nhân viên kho thực thi", CreatedAt = new DateTime(2026, 4, 1), CreatedBy = "system", IsDeleted = false }
             );
 
-            // Seed Default Admin User (Pass: 123456)
-            modelBuilder.Entity<SystemUser>().HasData(
-                new SystemUser 
-                { 
-                    Id = 1, 
-                    Username = "admin", 
-                    PasswordHash = "$2a$11$YdARVT2D8JlkgVIzeI0SAJx0v.xxCm4bnhQ.GmUiW", 
-                    FullName = "Hệ thống Quản trị", 
-                    Email = "admin@wms.com", 
-                    RoleId = 1, 
-                    IsActive = true,
-                    CreatedAt = new DateTime(2026, 4, 1),
-                    CreatedBy = "system",
-                    IsDeleted = false
-                }
-            );
         }
 
         private static System.Linq.Expressions.LambdaExpression CreateSoftDeleteFilter(Type type)

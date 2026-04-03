@@ -1,105 +1,105 @@
-# 📦 QLKHO_PHANVANHOANG
+# 📦 QLKHO_PHANVANHOANG - Warehouse Management System API
 
 [![version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/hoangphan04211/be-asp)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![dotnet](https://img.shields.io/badge/.NET-8.0-blueviolet)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/hoangphan04211/be-asp/pulls)
 
-**Mô tả ngắn gọn**: Hệ thống API Backend Quản lý Kho (WMS) thông minh giúp doanh nghiệp tối ưu hóa quy trình lưu trữ, theo dõi hàng hóa và giá vốn theo thời gian thực.
+**Hệ thống Quản lý Kho (WMS) API thông minh** là giải pháp Backend chuyên nghiệp được thiết kế theo mô hình kiến trúc phân lớp (N-Tier Architecture), hỗ trợ doanh nghiệp tối ưu hóa quy trình lưu trữ, theo dõi biến động hàng hóa và kiểm soát giá vốn theo thời gian thực.
 
 <p align="center">
-  <img src="https://via.placeholder.com/800x400?text=Warehouse+Management+System+API+Dashboard" alt="Demo Screenshot" width="800">
+  <img src="https://via.placeholder.com/800x400?text=Modern+Warehouse+Management+System+Backend" alt="Demo Screenshot" width="800">
 </p>
 
-## 📋 Mục lục
-- [Tổng quan](#tổng-quan)
-- [Tính năng](#tính-năng)
-- [Công nghệ sử dụng](#công-nghệ-sử-dụng)
-- [Yêu cầu hệ thống](#yêu-cầu-hệ-thống)
-- [Cài đặt](#cài-đặt)
-- [Cấu hình](#cấu-hình)
-- [Chạy dự án](#chạy-dự-án)
-- [Cấu trúc thư mục](#cấu-trúc-thư-mục)
-- [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
-- [API Documentation](#api-documentation)
-- [Database Schema](#database-schema)
-- [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng)
-- [Testing](#testing)
-- [Triển khai](#triển-khai)
-- [Tác giả](#tác-giả)
+---
+
+## 🏗️ Kiến trúc Hệ thống (System Architecture)
+
+Dự án được xây dựng dựa trên các tiêu chuẩn **Clean Code** và **Enterprise Design Patterns**, đảm bảo tính mở rộng (Scalability) và bảo trì (Maintainability) lâu dài.
+
+### 📂 Cấu trúc thư mục Chi tiết (Folder Structure)
+
+Dưới đây là chi tiết các thành phần cấu thành nên hệ thống "trái tim" của Warehouse Management:
+
+1.  **`Controllers/` (Tầng Giao Diện - Presentation Layer)**
+    - *Chức năng:* Tiếp nhận các HTTP Request từ Client (Frontend, Mobile, Third-party).
+    - *Chi tiết:* Điều hướng dữ liệu đến các Service tương ứng và phản hồi kết quả theo chuẩn **RESTful API**. Bao gồm các Module: Auth, Products, Inbound, Outbound, Transfer, Audit...
+
+2.  **`Services/` (Tầng Nghiệp Vụ - Business Logic Layer)**
+    - *Chức năng:* Xử lý logic nghiệp vụ cốt lõi của hệ thống.
+    - *Chi tiết:* Nơi thực thi các quy tắc kinh doanh phức tạp như: tính giá vốn bình quân gia quyền (AQW), kiểm tra ngưỡng tồn kho tối thiểu, logic kiểm kê hàng hóa.
+
+3.  **`Repositories/` (Tầng Truy Cập Dữ Liệu - Data Access Layer)**
+    - *Chức năng:* Trừu tượng hóa việc giao tiếp với Cơ sở dữ liệu.
+    - *Chi tiết:* Áp dụng Pattern **Generic Repository** và **Unit of Work** để đảm bảo tính nhất quán của dữ liệu (Transaction) và giúp việc chuyển đổi database (nếu cần) trở nên linh hoạt.
+
+4.  **`Models/` (Domain Models)**
+    - *Chức năng:* Định nghĩa các thực thể dữ liệu (Entities).
+    - *Chi tiết:* Các lớp đại diện cho bảng trong Database (`Product`, `Warehouse`, `Inventory`...). Bao gồm `BaseEntity` hỗ trợ lưu vết lịch sử (Created/Updated) và Xóa mềm (Soft Delete).
+
+5.  **`DTOs/` (Data Transfer Objects)**
+    - *Chức năng:* Các lớp trung gian truyền tải dữ liệu.
+    - *Chi tiết:* Giúp bảo mật Entity gốc, chỉ truyền tải những thông tin cần thiết giữa các tầng, tối ưu hóa kích thước dữ liệu truyền tải qua mạng.
+
+6.  **`Data/` (Infrastructure Layer)**
+    - *Chức năng:* Quản lý hạ tầng dữ liệu.
+    - *Chi tiết:* Chứa `ApplicationDbContext`, cấu hình Seeding (dữ liệu mẫu) và quản lý các phiên bản database thông qua Entity Framework Migrations.
+
+7.  **`Jobs/` (Background Tasks)**
+    - *Chức năng:* Thực thi các tác vụ định kỳ tự động.
+    - *Chi tiết:* Sử dụng **Hangfire** để xử lý các công việc chạy ngầm như: gửi thông báo hàng hết hạn, kiểm tra tồn kho thấp vào cuối ngày.
+
+8.  **`Middlewares/` (Global Middleware)**
+    - *Chức năng:* Xử lý các tác vụ xuyên suốt (Cross-cutting Concerns).
+    - *Chi tiết:* Tích hợp `ExceptionMiddleware` để bắt lỗi Runtime và trả về định dạng lỗi API thống nhất cho Client.
+
+9.  **`Helpers/` (System Utilities)**
+    - *Chức năng:* Các tiện ích bổ trợ hệ thống.
+    - *Chi tiết:* Chứa `ApiResponse` chuẩn hóa đầu ra, `Pagination` phục vụ phân trang dữ liệu lớn.
+
+10. **`Validators/` (Data Validation)**
+    - *Chức năng:* Kiểm chuẩn dữ liệu đầu vào.
+    - *Chi tiết:* Sử dụng **FluentValidation** để cấu hình các ràng buộc dữ liệu chặt chẽ (SKU không trùng, số lượng > 0...).
+
+11. **`Profiles/` (AutoMapper Mapping)**
+    - *Chức năng:* Cấu hình ánh xạ đối tượng.
+    - *Chi tiết:* Định nghĩa quy tắc chuyển đổi tự động giữa Entity và DTO.
+
+12. **`wwwroot/` (Static Files)**
+    - *Chức năng:* Lưu trữ tài nguyên tĩnh.
+    - *Chi tiết:* Nơi lưu trữ hình ảnh sản phẩm được tải lên từ hệ thống.
 
 ---
 
-## Tổng quan
-Dự án được phát triển nhằm cung cấp một giải pháp quản lý kho mạnh mẽ, bảo mật và dễ mở rộng. Hệ thống hỗ trợ đầy đủ các quy trình từ nhập hàng, xuất hàng đến điều chuyển nội bộ và kiểm kê định kỳ.
+## 🛠️ Tính năng & Công nghệ (Features & Technologies)
 
-## Tính năng
-- **Quản lý Danh mục (Master Data)**: Sản phẩm, Kho hàng, Nhà cung cấp, Khách hàng.
-- **Quản lý Nhập kho (Inbound)**: Hỗ trợ nhập hàng theo lô (Lot), tự động tính giá vốn theo phương pháp **Bình quân gia quyền (Weighted Average Cost)**.
-- **Quản lý Xuất kho (Outbound)**: Kiểm soát tồn kho thực tế, đảm bảo không xuất quá số lượng hiện có.
-- **Điều chuyển nội bộ (Transfer)**: Quản lý di chuyển hàng hóa giữa các kho.
-- **Kiểm kê (Stock Take)**: Lập phiếu kiểm kê, đối soát và tự động điều chỉnh tồn kho.
-- **Thẻ kho (Stock Card)**: Truy xuất chi tiết lịch sử biến động của từng mặt hàng.
-- **Báo cáo & Cảnh báo**: Tích hợp Hangfire để gửi cảnh báo hàng sắp hết hạn hoặc dưới ngưỡng tồn tối thiểu.
-- **Bảo mật**: Xác thực JWT, phân quyền Role-based (Admin, Manager, Employee).
-- **Log & Audit**: Ghi lại mọi thay đổi dữ liệu (ai sửa, sửa gì, lúc nào).
+### Tính năng Nổi bật
+- **Quản lý tồn kho theo lô (Lot):** Theo dõi chi tiết từng lô hàng, ngày nhập và hạn sử dụng.
+- **Giá vốn thông minh:** Tự động tính toán giá vốn khi nhập hàng.
+- **Thẻ kho (Stock Card):** Truy vết lịch sử xuất nhập kho 100% không sai lệch.
+- **Hệ thống Kiểm soát (Audit Log):** Ghi lại mọi hành động thay đổi dữ liệu (Ai thay đổi, Giá trị cũ/mới).
+- **Phân quyền (RBAC):** Admin (Toàn quyền), WarehouseManager (Quản lý), Employee (Thực thi).
 
-## Công nghệ sử dụng
-- **Backend**: ASP.NET Core 8.0 (Web API)
-- **Database**: SQL Server
-- **ORM**: Entity Framework Core
-- **Authentication**: JWT (JSON Web Token)
-- **Background Jobs**: Hangfire
-- **Logging**: Serilog
-- **Validation**: FluentValidation
-- **Tài liệu**: Swagger / OpenAPI
-
-## Yêu cầu hệ thống
-- .NET 8.0 SDK
-- SQL Server (hoặc Docker chạy SQL Server)
-- Visual Studio 2022 hoặc VS Code
-
-## Cài đặt
-1. Clone repository:
-   ```bash
-   git clone https://github.com/hoangphan04211/be-asp.git
-   ```
-2. Cài đặt các thư viện:
-   ```bash
-   dotnet restore
-   ```
-
-## Cấu hình
-1. Sao chép file cấu hình mẫu:
-   ```bash
-   cp appsettings.Example.json appsettings.json
-   ```
-2. Cập nhật chuỗi kết nối Database và khóa JWT trong `appsettings.json`.
-
-## Chạy dự án
-1. Cập nhật Database (Migration):
-   ```bash
-   dotnet ef database update
-   ```
-2. Chạy ứng dụng:
-   ```bash
-   dotnet run
-   ```
-
-## Cấu trúc thư mục
-- `Controllers/`: Xử lý các yêu cầu API.
-- `Services/`: Logic nghiệp vụ chính của hệ thống.
-- `Repositories/`: Tương tác với cơ sở dữ liệu (Pattern Repository & Unit of Work).
-- `Models/`: Các thực thể database và cấu hình mapping.
-- `DTOs/`: Data Transfer Objects cho đầu vào/đầu ra API.
-- `Data/`: ApplicationDbContext và dữ liệu khởi tạo (Seed data).
-
-## API Documentation
-Sau khi chạy dự án, bạn có thể truy cập Swagger UI tại:
-`https://localhost:xxxx/index.html` (Trang chủ Swagger)
-
-## Tác giả
-**Phan Van Hoang** - *Dẫn dắt phát triển* - [GitHub Profile](https://github.com/hoangphan04211)
+### Công nghệ lõi
+- **Core:** .NET 8.0, EF Core 8
+- **Security:** JWT Identity, BCrypt Password Hashing
+- **Performance:** Hangfire Server, Static File Serving
+- **Docs:** Swagger UI (OpenAPI v3)
 
 ---
-*Cảm ơn bạn đã quan tâm đến dự án này!*
+
+## 🚀 Cài đặt & Vận hành (Deployment & Setup)
+
+1.  **Môi trường:** Đảm bảo máy tính đã cài đặt .NET 8 SDK và SQL Server.
+2.  **Cấu hình:** Sao chép `appsettings.Example.json` thành `appsettings.json`, cập nhật `DefaultConnection`.
+3.  **Migration:** Mở terminal và chạy `dotnet ef database update`.
+4.  **Running:** Chạy lệnh `dotnet run` và truy cập `https://localhost:xxxx` để trải nghiệm Swagger API.
+
+---
+
+## ✍️ Tác giả & Đóng góp
+- **Chủ dự án:** Phan Van Hoang
+- **Email:** hoangpv@example.com
+
+---
+*Dự án này được xây dựng với tâm thế mang lại giá trị thực tế nhất cho quy trình quản lý kho hiện đại.*

@@ -141,5 +141,93 @@ namespace QLKHO_PhanVanHoang.Services
 
             return (successCount, errors);
         }
+
+        public async Task<(int SuccessCount, List<string> Errors)> ImportInventoryAsync(IFormFile file)
+        {
+            var errors = new List<string>();
+            int successCount = 0;
+
+            if (file == null || file.Length == 0)
+            {
+                errors.Add("File lỗi hoặc nội dung trống.");
+                return (0, errors);
+            }
+
+            using var stream = new MemoryStream();
+            await file.CopyToAsync(stream);
+            
+            using var workbook = new XLWorkbook(stream);
+            var worksheet = workbook.Worksheet(1);
+            var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
+
+            // Cần IInventoryService để xử lý logic tăng tồn & ghi thẻ kho
+            // Vì IExcelService không inject IInventoryService để tránh circular dependency, 
+            // ta sẽ xử lý trực tiếp qua UnitOfWork hoặc dùng Service Locator nếu cần.
+            // Tuy nhiên, logic IncreaseInventory khá phức tạp, tốt nhất là inject IInventoryService vào ExcelService.
+
+            foreach (var row in rows)
+            {
+                try
+                {
+                    string skuCode = row.Cell(1).GetString().Trim();
+                    if (!decimal.TryParse(row.Cell(2).GetString(), out decimal quantity)) quantity = 0;
+                    if (!int.TryParse(row.Cell(3).GetString(), out int warehouseId)) warehouseId = 1;
+                    string lotNumber = row.Cell(4).GetString().Trim();
+
+                    if (string.IsNullOrEmpty(skuCode) || quantity <= 0)
+                    {
+                        errors.Add($"Row {row.RowNumber()}: SKU trống hoặc số lượng <= 0.");
+                        continue;
+                    }
+
+                    var products = await _unitOfWork.Products.FindAsync(p => p.SkuCode == skuCode);
+                    var product = products.FirstOrDefault();
+                    if (product == null)
+                    {
+                        errors.Add($"Row {row.RowNumber()}: Không tìm thấy sản phẩm SKU {skuCode}.");
+                        continue;
+                    }
+
+                    // Thực hiện tăng tồn kho (Logic tương tự InventoryService nhưng làm tại đây)
+                    var inventories = await _unitOfWork.Inventories.FindAsync(i => i.ProductId == product.Id && i.WarehouseId == warehouseId && i.LotNumber == lotNumber);
+                    var inv = inventories.FirstOrDefault();
+
+                    decimal currentQty = inv?.QuantityOnHand ?? 0;
+                    if (inv == null)
+                    {
+                        inv = new Inventory { ProductId = product.Id, WarehouseId = warehouseId, LotNumber = lotNumber, QuantityOnHand = quantity };
+                        await _unitOfWork.Inventories.AddAsync(inv);
+                    }
+                    else
+                    {
+                        inv.QuantityOnHand += quantity;
+                        _unitOfWork.Inventories.Update(inv);
+                    }
+
+                    // Ghi thẻ kho
+                    await _unitOfWork.StockCards.AddAsync(new StockCard
+                    {
+                        ProductId = product.Id,
+                        WarehouseId = warehouseId,
+                        LotNumber = lotNumber,
+                        TransactionType = "Inbound",
+                        ReferenceCode = "IMPORT-EXCEL",
+                        BeforeQuantity = currentQty,
+                        ChangeQuantity = quantity,
+                        AfterQuantity = currentQty + quantity,
+                        Notes = "Nhập tồn kho hàng loạt từ file Excel"
+                    });
+
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    errors.Add($"Row {row.RowNumber()}: Lỗi hệ thống -> {ex.Message}");
+                }
+            }
+
+            await _unitOfWork.CompleteAsync();
+            return (successCount, errors);
+        }
     }
 }

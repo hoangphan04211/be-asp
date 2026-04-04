@@ -47,9 +47,9 @@ namespace QLKHO_PhanVanHoang.Controllers
 
         [Authorize(Roles = "Admin,WarehouseManager,Employee")]
         [HttpPost("create")]
-        public async Task<IActionResult> CreateTransfer(int fromWarehouseId, int toWarehouseId, string code, string? notes)
+        public async Task<IActionResult> CreateTransfer([FromBody] QLKHO_PhanVanHoang.DTOs.CreateTransferDto dto)
         {
-            await _transferService.CreateTransferVoucherAsync(fromWarehouseId, toWarehouseId, code, notes);
+            await _transferService.CreateTransferVoucherAsync(dto);
             return Ok(ApiResponse<object>.SuccessResult(null, "Created transfer voucher successfully"));
         }
 

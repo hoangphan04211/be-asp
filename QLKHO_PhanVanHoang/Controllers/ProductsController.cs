@@ -8,6 +8,7 @@ using QLKHO_PhanVanHoang.DTOs;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Models;
 using QLKHO_PhanVanHoang.Repositories;
+using QLKHO_PhanVanHoang.Services;
 
 namespace QLKHO_PhanVanHoang.Controllers
 {
@@ -18,11 +19,32 @@ namespace QLKHO_PhanVanHoang.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IFileService _fileService;
+        private readonly ICodeGeneratorService _codeGenerator;
 
-        public ProductsController(IUnitOfWork unitOfWork, IMapper mapper)
+        public ProductsController(IUnitOfWork unitOfWork, IMapper mapper, IFileService fileService, ICodeGeneratorService codeGenerator)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _fileService = fileService;
+            _codeGenerator = codeGenerator;
+        }
+
+        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HttpPost("upload-image")]
+        public async Task<IActionResult> UploadImage(IFormFile file)
+        {
+            if (file == null || file.Length == 0) return BadRequest(ApiResponse<object>.FailureResult("File không hợp lệ."));
+            
+            try 
+            {
+                var url = await _fileService.UploadImageAsync(file);
+                return Ok(ApiResponse<string>.SuccessResult(url, "Tải ảnh lên thành công."));
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ApiResponse<object>.FailureResult($"Lỗi upload: {ex.Message}"));
+            }
         }
 
         [HttpGet]
@@ -32,7 +54,7 @@ namespace QLKHO_PhanVanHoang.Controllers
                 @params.PageNumber,
                 @params.PageSize,
                 p => string.IsNullOrEmpty(@params.SearchTerm) || p.Name.Contains(@params.SearchTerm) || p.SkuCode.Contains(@params.SearchTerm),
-                null,
+                q => q.OrderByDescending(p => p.CreatedAt),
                 "Category");
 
             var dtos = _mapper.Map<IEnumerable<ProductDto>>(result.Items);
@@ -63,6 +85,12 @@ namespace QLKHO_PhanVanHoang.Controllers
         public async Task<IActionResult> Create(CreateProductDto dto)
         {
             var product = _mapper.Map<Product>(dto);
+            
+            if (string.IsNullOrEmpty(product.SkuCode))
+            {
+                product.SkuCode = await _codeGenerator.GenerateProductCodeAsync();
+            }
+
             await _unitOfWork.Products.AddAsync(product);
             await _unitOfWork.CompleteAsync();
             return Ok(ApiResponse<ProductDto>.SuccessResult(_mapper.Map<ProductDto>(product), "Created product successfully"));
@@ -74,6 +102,12 @@ namespace QLKHO_PhanVanHoang.Controllers
         {
             var product = await _unitOfWork.Products.GetByIdAsync(id);
             if (product == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy sản phẩm."));
+
+            // Nếu đổi ảnh mới, xóa ảnh cũ trên Cloudinary để nhẹ storage (Tùy chọn cho doanh nghiệp)
+            if (!string.IsNullOrEmpty(product.ImageUrl) && product.ImageUrl != dto.ImageUrl)
+            {
+                await _fileService.DeleteImageAsync(product.ImageUrl);
+            }
 
             _mapper.Map(dto, product);
             _unitOfWork.Products.Update(product);

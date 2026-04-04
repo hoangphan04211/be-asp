@@ -152,6 +152,28 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<object>.SuccessResult(null, "Mật khẩu đã được cập nhật thành công"));
         }
 
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var user = await _unitOfWork.SystemUsers.GetByIdAsync(userId);
+            
+            if (user == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy người dùng."));
+
+            // Xác thực mật khẩu cũ
+            if (!BCrypt.Net.BCrypt.Verify(dto.OldPassword, user.PasswordHash))
+            {
+                return BadRequest(ApiResponse<object>.FailureResult("Mật khẩu cũ không chính xác."));
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            _unitOfWork.SystemUsers.Update(user);
+            await _unitOfWork.CompleteAsync();
+
+            return Ok(ApiResponse<object>.SuccessResult(null, "Đổi mật khẩu thành công."));
+        }
+
         #region Helpers
         private string GenerateAccessToken(Models.SystemUser user, string roleName)
         {

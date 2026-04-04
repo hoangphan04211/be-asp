@@ -18,7 +18,7 @@ Dự án được xây dựng dựa trên các tiêu chuẩn **Clean Code** và 
 
 1.  **`Controllers/` (Tầng Giao Diện - Presentation Layer)**
     - Tiếp nhận HTTP Request, điều hướng đến Service và phản hồi theo chuẩn RESTful API.
-    - Bao gồm: `AuthController`, `ProductsController`, `WarehousesController`, `InboundController`, `OutboundController`, `TransferController`, `CountingController`, `InventoryController`, `DashboardController`, `UsersController`, `AuditController`, `ExcelController`, `FileController`.
+    - Bao gồm: `AuthController`, `ProductsController`, `WarehousesController`, `InboundController`, `OutboundController`, `TransferController`, `CountingController`, `InventoryController`, `DashboardController`, `UsersController`, `AuditController`, `ExcelController`, `FileController`, `TrashController`.
 
 2.  **`Services/` (Tầng Nghiệp Vụ - Business Logic Layer)**
     - Xử lý logic nghiệp vụ cốt lõi: tính **giá vốn bình quân gia quyền (Weighted Average Cost)**, kiểm tra ngưỡng tồn kho, logic kiểm kê, chuyển kho.
@@ -311,6 +311,8 @@ SystemUsers >── Roles
 - **Quản lý người dùng:** Admin CRUD tài khoản nhân viên, gán Role, reset mật khẩu.
 - **Thông báo thời gian thực:** Cảnh báo tồn kho thấp và thông báo qua **SignalR**.
 - **Bảo mật nâng cao:** Refresh Token, Quên mật khẩu qua OTP 6 chữ số gửi Email.
+- **Tự động đặt mã (Auto-Code):** Hệ thống thông minh tự động sinh mã SKU cho Sản phẩm (`SP-XXXXX`) và mã chứng từ (`PN`, `PX`, `DC`, `KK`) theo định dạng `MÃ-YYYYMMDD-STT`.
+- **Quản lý Thùng rác (Trash Bin):** Lưu trữ các mục đã xóa tạm (Products, Suppliers, Customers, Warehouses, Categories). Hỗ trợ khôi phục hoặc xóa vĩnh viễn (Chỉ dành cho Admin).
 - **Xuất/Nhập Excel:** Import sản phẩm hàng loạt, xuất báo cáo tồn kho (ClosedXML).
 
 ### Công nghệ lõi
@@ -359,6 +361,9 @@ SystemUsers >── Roles
 | Inventory | `GET /api/Inventory/stock-cards` | Xem thẻ kho |
 | Dashboard | `GET /api/Dashboard/summary` | Thống kê tổng quan |
 | Dashboard | `GET /api/Dashboard/low-stock` | Danh sách hàng sắp hết |
+| Trash | `GET /api/Trash` | Danh sách mục đã xóa tạm |
+| Trash | `POST /api/Trash/restore/{type}/{id}` | Khôi phục dữ liệu |
+| Trash | `DELETE /api/Trash/hard-delete/{type}/{id}` | Xóa vĩnh viễn (Admin) |
 | Audit | `GET /api/Audit` | Nhật ký thay đổi dữ liệu |
 | Excel | `GET /api/Excel/export-inventory` | Xuất báo cáo tồn kho |
 | Excel | `POST /api/Excel/import-products` | Import sản phẩm từ Excel |
@@ -401,10 +406,10 @@ dotnet test
         "DurationInMinutes": "120"
       },
       "EmailSettings": {
-        "SmtpServer": "smtp-relay.brevo.com",
+        "SmtpServer": "YOUR_SMTP_HOST",
         "Port": 587,
-        "SenderEmail": "your-verified-email@domain.com",
-        "SenderPassword": "your-brevo-api-key"
+        "SenderEmail": "YOUR_SENDER_EMAIL",
+        "SenderPassword": "YOUR_SMTP_PASSWORD"
       }
     }
     ```

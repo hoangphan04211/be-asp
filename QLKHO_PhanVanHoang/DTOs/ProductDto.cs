@@ -1,3 +1,5 @@
+using System;
+
 namespace QLKHO_PhanVanHoang.DTOs
 {
     public class ProductDto
@@ -14,6 +16,7 @@ namespace QLKHO_PhanVanHoang.DTOs
         public string? ImageUrl { get; set; }
         public int MinStockLevel { get; set; }
         public bool IsLotManaged { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 
     public class CreateProductDto

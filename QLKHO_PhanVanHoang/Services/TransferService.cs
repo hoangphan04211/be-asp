@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using QLKHO_PhanVanHoang.Models;
 using QLKHO_PhanVanHoang.Repositories;
+using QLKHO_PhanVanHoang.DTOs;
 
 namespace QLKHO_PhanVanHoang.Services
 {
@@ -10,29 +11,40 @@ namespace QLKHO_PhanVanHoang.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IInventoryService _inventoryService;
+        private readonly ICodeGeneratorService _codeGenerator;
 
-        public TransferService(IUnitOfWork unitOfWork, IInventoryService inventoryService)
+        public TransferService(IUnitOfWork unitOfWork, IInventoryService inventoryService, ICodeGeneratorService codeGenerator)
         {
             _unitOfWork = unitOfWork;
             _inventoryService = inventoryService;
+            _codeGenerator = codeGenerator;
         }
-
-        public async Task CreateTransferVoucherAsync(int fromWarehouseId, int toWarehouseId, string code, string? notes)
+        public async Task CreateTransferVoucherAsync(CreateTransferDto dto)
         {
-            if (fromWarehouseId == toWarehouseId)
+            if (dto.FromWarehouseId == dto.ToWarehouseId)
             {
                 throw new ArgumentException("Kho gửi và kho nhận phải khác nhau.");
             }
 
             var voucher = new TransferVoucher
             {
-                FromWarehouseId = fromWarehouseId,
-                ToWarehouseId = toWarehouseId,
-                Code = code,
+                FromWarehouseId = dto.FromWarehouseId,
+                ToWarehouseId = dto.ToWarehouseId,
+                Code = string.IsNullOrEmpty(dto.Code) ? await _codeGenerator.GenerateTransferCodeAsync() : dto.Code,
                 Status = "Draft",
                 TransferDate = DateTime.Now,
-                Notes = notes
+                Notes = dto.Notes
             };
+
+            foreach (var detail in dto.Details)
+            {
+                voucher.Details.Add(new TransferVoucherDetail
+                {
+                    ProductId = detail.ProductId,
+                    LotNumber = detail.LotNumber,
+                    Quantity = detail.Quantity
+                });
+            }
 
             await _unitOfWork.TransferVouchers.AddAsync(voucher);
             await _unitOfWork.CompleteAsync();

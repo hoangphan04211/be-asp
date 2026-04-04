@@ -64,6 +64,18 @@ namespace QLKHO_PhanVanHoang.Profiles
             CreateMap<CreateCountingSheetDto, CountingSheet>();
             CreateMap<CreateCountingSheetDetailDto, CountingSheetDetail>()
                 .ForMember(dest => dest.ActualQuantity, opt => opt.MapFrom(src => src.PhysicalQuantity));
+
+            // Inventory & StockCard mappings
+            CreateMap<Inventory, InventoryDto>()
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product != null ? src.Product.Name : string.Empty))
+                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product != null ? src.Product.SkuCode : string.Empty))
+                .ForMember(dest => dest.WarehouseName, opt => opt.MapFrom(src => src.Warehouse != null ? src.Warehouse.Name : string.Empty))
+                .ForMember(dest => dest.AvailableQuantity, opt => opt.MapFrom(src => src.AvailableQuantity));
+
+            CreateMap<StockCard, StockCardDto>()
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product != null ? src.Product.Name : string.Empty))
+                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product != null ? src.Product.SkuCode : string.Empty))
+                .ForMember(dest => dest.WarehouseName, opt => opt.MapFrom(src => src.Warehouse != null ? src.Warehouse.Name : string.Empty));
         }
     }
 }

@@ -20,12 +20,14 @@ namespace QLKHO_PhanVanHoang.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly IInboundService _inboundService;
         private readonly IMapper _mapper;
+        private readonly ICodeGeneratorService _codeGenerator;
 
-        public InboundController(IUnitOfWork unitOfWork, IInboundService inboundService, IMapper mapper)
+        public InboundController(IUnitOfWork unitOfWork, IInboundService inboundService, IMapper mapper, ICodeGeneratorService codeGenerator)
         {
             _unitOfWork = unitOfWork;
             _inboundService = inboundService;
             _mapper = mapper;
+            _codeGenerator = codeGenerator;
         }
 
         [HttpGet]
@@ -67,11 +69,16 @@ namespace QLKHO_PhanVanHoang.Controllers
         {
             var voucher = _mapper.Map<ReceivingVoucher>(dto);
             voucher.Status = "Draft";
+
+            if (string.IsNullOrEmpty(voucher.Code))
+            {
+                voucher.Code = await _codeGenerator.GenerateReceivingCodeAsync();
+            }
             
             await _unitOfWork.ReceivingVouchers.AddAsync(voucher);
             await _unitOfWork.CompleteAsync(); 
             
-            return Ok(ApiResponse<object>.SuccessResult(new { VoucherId = voucher.Id }, "Created draft receiving voucher successfully"));
+            return Ok(ApiResponse<object>.SuccessResult(new { VoucherId = voucher.Id, Code = voucher.Code }, "Created draft receiving voucher successfully"));
         }
 
         [Authorize(Roles = "Admin,WarehouseManager")]

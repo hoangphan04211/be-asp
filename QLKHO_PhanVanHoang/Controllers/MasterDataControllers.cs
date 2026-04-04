@@ -8,6 +8,7 @@ using QLKHO_PhanVanHoang.DTOs;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Models;
 using QLKHO_PhanVanHoang.Repositories;
+using QLKHO_PhanVanHoang.Services;
 
 namespace QLKHO_PhanVanHoang.Controllers
 {
@@ -31,7 +32,8 @@ namespace QLKHO_PhanVanHoang.Controllers
             var result = await _unitOfWork.Categories.GetPagedAsync(
                 @params.PageNumber,
                 @params.PageSize,
-                c => string.IsNullOrEmpty(@params.SearchTerm) || c.Name.Contains(@params.SearchTerm));
+                c => string.IsNullOrEmpty(@params.SearchTerm) || c.Name.Contains(@params.SearchTerm),
+                q => q.OrderByDescending(c => c.CreatedAt));
 
             var dtos = _mapper.Map<IEnumerable<CategoryDto>>(result.Items);
             
@@ -60,7 +62,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             var category = _mapper.Map<Category>(dto);
             await _unitOfWork.Categories.AddAsync(category);
             await _unitOfWork.CompleteAsync();
-            return Ok(ApiResponse<CategoryDto>.SuccessResult(_mapper.Map<CategoryDto>(category), "Created category successfully"));
+            return Ok(ApiResponse<CategoryDto>.SuccessResult(_mapper.Map<CategoryDto>(category), "Tạo loại hàng thành công"));
         }
 
         [Authorize(Roles = "Admin,WarehouseManager")]
@@ -68,12 +70,12 @@ namespace QLKHO_PhanVanHoang.Controllers
         public async Task<IActionResult> Update(int id, CreateCategoryDto dto)
         {
             var item = await _unitOfWork.Categories.GetByIdAsync(id);
-            if (item == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy danh mục."));
+            if (item == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy loại hàng."));
 
             _mapper.Map(dto, item);
             _unitOfWork.Categories.Update(item);
             await _unitOfWork.CompleteAsync();
-            return Ok(ApiResponse<CategoryDto>.SuccessResult(_mapper.Map<CategoryDto>(item), "Updated category successfully"));
+            return Ok(ApiResponse<CategoryDto>.SuccessResult(_mapper.Map<CategoryDto>(item), "Cập nhật loại hàng thành công"));
         }
 
         [Authorize(Roles = "Admin")]
@@ -85,19 +87,7 @@ namespace QLKHO_PhanVanHoang.Controllers
 
             _unitOfWork.Categories.Delete(category);
             await _unitOfWork.CompleteAsync();
-            return Ok(ApiResponse<object>.SuccessResult(null, "Deleted category successfully"));
-        }
-
-        [Authorize(Roles = "Admin")]
-        [HttpPost("restore/{id}")]
-        public async Task<IActionResult> Restore(int id)
-        {
-            var result = await _unitOfWork.Categories.GetPagedWithDeletedAsync(1, 1, c => c.Id == id);
-            var item = result.Items.FirstOrDefault();
-            if (item == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy để khôi phục."));
-            _unitOfWork.Categories.Restore(item);
-            await _unitOfWork.CompleteAsync();
-            return Ok(ApiResponse<object>.SuccessResult(null, "Restored category successfully"));
+            return Ok(ApiResponse<object>.SuccessResult(null, "Xóa danh mục thành công"));
         }
     }
 
@@ -108,11 +98,13 @@ namespace QLKHO_PhanVanHoang.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly ICodeGeneratorService _codeGenerator;
 
-        public SuppliersController(IUnitOfWork unitOfWork, IMapper mapper)
+        public SuppliersController(IUnitOfWork unitOfWork, IMapper mapper, ICodeGeneratorService codeGenerator)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _codeGenerator = codeGenerator;
         }
 
         [HttpGet]
@@ -121,7 +113,8 @@ namespace QLKHO_PhanVanHoang.Controllers
             var result = await _unitOfWork.Suppliers.GetPagedAsync(
                 @params.PageNumber,
                 @params.PageSize,
-                s => string.IsNullOrEmpty(@params.SearchTerm) || s.Name.Contains(@params.SearchTerm) || (s.Code != null && s.Code.Contains(@params.SearchTerm)));
+                s => string.IsNullOrEmpty(@params.SearchTerm) || s.Name.Contains(@params.SearchTerm) || (s.Code != null && s.Code.Contains(@params.SearchTerm)),
+                q => q.OrderByDescending(s => s.CreatedAt));
 
             var dtos = _mapper.Map<IEnumerable<SupplierDto>>(result.Items);
             
@@ -148,9 +141,15 @@ namespace QLKHO_PhanVanHoang.Controllers
         public async Task<IActionResult> Create(CreateSupplierDto dto)
         {
             var supplier = _mapper.Map<Supplier>(dto);
+
+            if (string.IsNullOrEmpty(supplier.Code))
+            {
+                supplier.Code = await _codeGenerator.GenerateSupplierCodeAsync();
+            }
+
             await _unitOfWork.Suppliers.AddAsync(supplier);
             await _unitOfWork.CompleteAsync();
-            return Ok(ApiResponse<SupplierDto>.SuccessResult(_mapper.Map<SupplierDto>(supplier), "Created supplier successfully"));
+            return Ok(ApiResponse<SupplierDto>.SuccessResult(_mapper.Map<SupplierDto>(supplier), "Tạo nhà cung cấp thành công"));
         }
 
         [Authorize(Roles = "Admin,WarehouseManager")]
@@ -163,7 +162,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             _mapper.Map(dto, item);
             _unitOfWork.Suppliers.Update(item);
             await _unitOfWork.CompleteAsync();
-            return Ok(ApiResponse<SupplierDto>.SuccessResult(_mapper.Map<SupplierDto>(item), "Updated supplier successfully"));
+            return Ok(ApiResponse<SupplierDto>.SuccessResult(_mapper.Map<SupplierDto>(item), "Cập nhật nhà cung cấp thành công"));
         }
 
         [Authorize(Roles = "Admin")]
@@ -174,19 +173,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             if (item == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy nhà cung cấp."));
             _unitOfWork.Suppliers.Delete(item);
             await _unitOfWork.CompleteAsync();
-            return Ok(ApiResponse<object>.SuccessResult(null, "Deleted supplier successfully"));
-        }
-
-        [Authorize(Roles = "Admin")]
-        [HttpPost("restore/{id}")]
-        public async Task<IActionResult> Restore(int id)
-        {
-            var result = await _unitOfWork.Suppliers.GetPagedWithDeletedAsync(1, 1, s => s.Id == id);
-            var item = result.Items.FirstOrDefault();
-            if (item == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy nhà cung cấp để khôi phục."));
-            _unitOfWork.Suppliers.Restore(item);
-            await _unitOfWork.CompleteAsync();
-            return Ok(ApiResponse<object>.SuccessResult(null, "Restored supplier successfully"));
+            return Ok(ApiResponse<object>.SuccessResult(null, "Xóa nhà cung cấp thành công"));
         }
     }
 
@@ -197,11 +184,13 @@ namespace QLKHO_PhanVanHoang.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly ICodeGeneratorService _codeGenerator;
 
-        public CustomersController(IUnitOfWork unitOfWork, IMapper mapper)
+        public CustomersController(IUnitOfWork unitOfWork, IMapper mapper, ICodeGeneratorService codeGenerator)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _codeGenerator = codeGenerator;
         }
 
         [HttpGet]
@@ -210,7 +199,8 @@ namespace QLKHO_PhanVanHoang.Controllers
             var result = await _unitOfWork.Customers.GetPagedAsync(
                 @params.PageNumber,
                 @params.PageSize,
-                c => string.IsNullOrEmpty(@params.SearchTerm) || c.Name.Contains(@params.SearchTerm) || c.Code.Contains(@params.SearchTerm));
+                c => string.IsNullOrEmpty(@params.SearchTerm) || c.Name.Contains(@params.SearchTerm) || (c.Code != null && c.Code.Contains(@params.SearchTerm)),
+                q => q.OrderByDescending(c => c.CreatedAt));
 
             var dtos = _mapper.Map<IEnumerable<CustomerDto>>(result.Items);
             
@@ -237,9 +227,15 @@ namespace QLKHO_PhanVanHoang.Controllers
         public async Task<IActionResult> Create(CreateCustomerDto dto)
         {
             var customer = _mapper.Map<Customer>(dto);
+
+            if (string.IsNullOrEmpty(customer.Code))
+            {
+                customer.Code = await _codeGenerator.GenerateCustomerCodeAsync();
+            }
+
             await _unitOfWork.Customers.AddAsync(customer);
             await _unitOfWork.CompleteAsync();
-            return Ok(ApiResponse<CustomerDto>.SuccessResult(_mapper.Map<CustomerDto>(customer), "Created customer successfully"));
+            return Ok(ApiResponse<CustomerDto>.SuccessResult(_mapper.Map<CustomerDto>(customer), "Tạo khách hàng thành công"));
         }
 
         [Authorize(Roles = "Admin,WarehouseManager")]
@@ -252,7 +248,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             _mapper.Map(dto, item);
             _unitOfWork.Customers.Update(item);
             await _unitOfWork.CompleteAsync();
-            return Ok(ApiResponse<CustomerDto>.SuccessResult(_mapper.Map<CustomerDto>(item), "Updated customer successfully"));
+            return Ok(ApiResponse<CustomerDto>.SuccessResult(_mapper.Map<CustomerDto>(item), "Cập nhật khách hàng thành công"));
         }
 
         [Authorize(Roles = "Admin")]
@@ -263,19 +259,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             if (item == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy khách hàng."));
             _unitOfWork.Customers.Delete(item);
             await _unitOfWork.CompleteAsync();
-            return Ok(ApiResponse<object>.SuccessResult(null, "Deleted customer successfully"));
-        }
-
-        [Authorize(Roles = "Admin")]
-        [HttpPost("restore/{id}")]
-        public async Task<IActionResult> Restore(int id)
-        {
-            var result = await _unitOfWork.Customers.GetPagedWithDeletedAsync(1, 1, c => c.Id == id);
-            var item = result.Items.FirstOrDefault();
-            if (item == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy khách hàng để khôi phục."));
-            _unitOfWork.Customers.Restore(item);
-            await _unitOfWork.CompleteAsync();
-            return Ok(ApiResponse<object>.SuccessResult(null, "Restored customer successfully"));
+            return Ok(ApiResponse<object>.SuccessResult(null, "Xóa khách hàng thành công"));
         }
     }
 }

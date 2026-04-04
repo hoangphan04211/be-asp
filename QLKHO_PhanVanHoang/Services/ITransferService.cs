@@ -1,10 +1,11 @@
 using System.Threading.Tasks;
+using QLKHO_PhanVanHoang.DTOs;
 
 namespace QLKHO_PhanVanHoang.Services
 {
     public interface ITransferService
     {
-        Task CreateTransferVoucherAsync(int fromWarehouseId, int toWarehouseId, string code, string? notes);
+        Task CreateTransferVoucherAsync(CreateTransferDto dto);
         Task ApproveTransferVoucherAsync(int voucherId);
     }
 }

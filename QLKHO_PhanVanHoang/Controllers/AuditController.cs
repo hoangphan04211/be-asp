@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Models;
 using QLKHO_PhanVanHoang.Repositories;
+using QLKHO_PhanVanHoang.Services;
 
 namespace QLKHO_PhanVanHoang.Controllers
 {
@@ -14,25 +15,18 @@ namespace QLKHO_PhanVanHoang.Controllers
     [Route("api/[controller]")]
     public class AuditController : ControllerBase
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IAuditService _auditService;
 
-        public AuditController(IUnitOfWork unitOfWork)
+        public AuditController(IAuditService auditService)
         {
-            _unitOfWork = unitOfWork;
+            _auditService = auditService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetPaged([FromQuery] PaginationParams @params, string? entityName, string? action)
+        public async Task<IActionResult> GetPaged([FromQuery] AuditLogParams @params)
         {
-            var query = _unitOfWork.AuditLogs.GetPagedAsync(
-                @params.PageNumber,
-                @params.PageSize,
-                a => (string.IsNullOrEmpty(entityName) || a.EntityName == entityName) &&
-                     (string.IsNullOrEmpty(action) || a.Action == action),
-                q => q.OrderByDescending(a => a.ChangedAt));
-
-            var result = await query;
-            return Ok(ApiResponse<PagedResult<AuditLog>>.SuccessResult(result));
+            var result = await _auditService.GetPagedLogsAsync(@params);
+            return Ok(ApiResponse<PagedResult<AuditLogDto>>.SuccessResult(result));
         }
     }
 }

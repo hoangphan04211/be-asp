@@ -20,12 +20,14 @@ namespace QLKHO_PhanVanHoang.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICountingService _countingService;
         private readonly IMapper _mapper;
+        private readonly ICodeGeneratorService _codeGenerator;
 
-        public CountingController(IUnitOfWork unitOfWork, ICountingService countingService, IMapper mapper)
+        public CountingController(IUnitOfWork unitOfWork, ICountingService countingService, IMapper mapper, ICodeGeneratorService codeGenerator)
         {
             _unitOfWork = unitOfWork;
             _countingService = countingService;
             _mapper = mapper;
+            _codeGenerator = codeGenerator;
         }
 
         [HttpGet]
@@ -66,10 +68,15 @@ namespace QLKHO_PhanVanHoang.Controllers
             var sheet = _mapper.Map<CountingSheet>(dto);
             sheet.Status = "Draft";
 
+            if (string.IsNullOrEmpty(sheet.Code))
+            {
+                sheet.Code = await _codeGenerator.GenerateCountingCodeAsync();
+            }
+
             await _unitOfWork.CountingSheets.AddAsync(sheet);
             await _unitOfWork.CompleteAsync();
 
-            return Ok(ApiResponse<object>.SuccessResult(new { SheetId = sheet.Id }, "Created draft counting sheet successfully"));
+            return Ok(ApiResponse<object>.SuccessResult(new { SheetId = sheet.Id, Code = sheet.Code }, "Created draft counting sheet successfully"));
         }
 
         [Authorize(Roles = "Admin,WarehouseManager")]

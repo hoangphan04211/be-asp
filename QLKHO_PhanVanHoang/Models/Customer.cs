@@ -23,6 +23,9 @@ namespace QLKHO_PhanVanHoang.Models
         [MaxLength(200)]
         public string? Email { get; set; }
         
+        [MaxLength(100)]
+        public string? ContactPerson { get; set; }
+        
         [MaxLength(1000)]
         public string? Description { get; set; }
     }

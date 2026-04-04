@@ -151,12 +151,20 @@ namespace QLKHO_PhanVanHoang.Data
                             break;
 
                         case EntityState.Deleted:
-                            // Convert to Soft Delete
-                            entry.State = EntityState.Modified;
-                            entry.Entity.IsDeleted = true;
-                            entry.Entity.UpdatedAt = DateTime.Now;
-                            entry.Entity.UpdatedBy = userId;
-                            auditEntry.AuditType = "Delete";
+                            if (entry.Entity.IsDeleted)
+                            {
+                                // If already soft-deleted, allow hard delete
+                                auditEntry.AuditType = "HardDelete";
+                            }
+                            else
+                            {
+                                // Convert to Soft Delete
+                                entry.State = EntityState.Modified;
+                                entry.Entity.IsDeleted = true;
+                                entry.Entity.UpdatedAt = DateTime.Now;
+                                entry.Entity.UpdatedBy = userId;
+                                auditEntry.AuditType = "Delete";
+                            }
                             if (property.OriginalValue != null) auditEntry.OldValues[propertyName] = property.OriginalValue;
                             break;
 

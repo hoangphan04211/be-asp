@@ -11,9 +11,10 @@ using QLKHO_PhanVanHoang.Jobs;
 using QLKHO_PhanVanHoang.Middlewares;
 using QLKHO_PhanVanHoang.Hubs;
 using Hangfire;
+using System.Reflection;
+using QLKHO_PhanVanHoang.Helpers;
 using FluentValidation.AspNetCore;
 using FluentValidation;
-using System.Reflection;
 
 namespace QLKHO_PhanVanHoang
 {
@@ -115,14 +116,21 @@ namespace QLKHO_PhanVanHoang
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // Đăng ký các Services
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
             builder.Services.AddScoped<IInventoryService, InventoryService>();
             builder.Services.AddScoped<IInboundService, InboundService>();
             builder.Services.AddScoped<IOutboundService, OutboundService>();
             builder.Services.AddScoped<IExcelService, ExcelService>();
             builder.Services.AddScoped<ITransferService, TransferService>();
             builder.Services.AddScoped<ICountingService, CountingService>();
+            builder.Services.AddScoped<IAuditService, AuditService>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddScoped<IFileService, CloudinaryService>();
+            builder.Services.AddScoped<ICodeGeneratorService, CodeGeneratorService>();
+
+            // Cloudinary Settings
+            builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
             // Cấu hình SignalR
             builder.Services.AddSignalR();

@@ -1,10 +1,14 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using QLKHO_PhanVanHoang.Helpers;
-using QLKHO_PhanVanHoang.Models;
+using QLKHO_PhanVanHoang.Services;
+using AutoMapper;
+using QLKHO_PhanVanHoang.DTOs;
 using QLKHO_PhanVanHoang.Repositories;
+using System.Linq;
 
 namespace QLKHO_PhanVanHoang.Controllers
 {
@@ -14,36 +18,80 @@ namespace QLKHO_PhanVanHoang.Controllers
     public class InventoryController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
+        private readonly IExcelService _excelService;
 
-        public InventoryController(IUnitOfWork unitOfWork)
+        public InventoryController(IUnitOfWork unitOfWork, IMapper mapper, IExcelService excelService)
         {
             _unitOfWork = unitOfWork;
-        }
-
-        [HttpGet("stock-cards")]
-        public async Task<IActionResult> GetStockCards([FromQuery] PaginationParams @params, int? productId, int? warehouseId)
-        {
-            var result = await _unitOfWork.StockCards.GetPagedAsync(
-                @params.PageNumber,
-                @params.PageSize,
-                s => (!productId.HasValue || s.ProductId == productId) && (!warehouseId.HasValue || s.WarehouseId == warehouseId),
-                q => q.OrderByDescending(s => s.CreatedAt),
-                "Product,Warehouse");
-            
-            return Ok(ApiResponse<PagedResult<StockCard>>.SuccessResult(result));
+            _mapper = mapper;
+            _excelService = excelService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetInventory([FromQuery] PaginationParams @params, int? productId, int? warehouseId)
+        public async Task<IActionResult> GetInventory([FromQuery] int? productId, [FromQuery] int? warehouseId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 15)
         {
             var result = await _unitOfWork.Inventories.GetPagedAsync(
-                @params.PageNumber,
-                @params.PageSize,
+                pageNumber,
+                pageSize,
                 i => (!productId.HasValue || i.ProductId == productId) && (!warehouseId.HasValue || i.WarehouseId == warehouseId),
-                q => q.OrderBy(i => i.ProductId),
-                "Product,Warehouse");
+                q => q.OrderByDescending(i => i.QuantityOnHand),
+                "Product,Warehouse"
+            );
 
-            return Ok(ApiResponse<PagedResult<Inventory>>.SuccessResult(result));
+            var dtos = _mapper.Map<IEnumerable<InventoryDto>>(result.Items);
+
+            return Ok(ApiResponse<PagedResult<InventoryDto>>.SuccessResult(new PagedResult<InventoryDto>
+            {
+                Items = dtos,
+                PageNumber = result.PageNumber,
+                PageSize = result.PageSize,
+                TotalCount = result.TotalCount,
+                TotalPages = result.TotalPages
+            }));
+        }
+
+        [HttpGet("stock-cards")]
+        public async Task<IActionResult> GetStockCards([FromQuery] int? productId, [FromQuery] int? warehouseId, [FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 15)
+        {
+            // Mặc định 30 ngày nếu không truyền
+            if (!fromDate.HasValue) fromDate = DateTime.Now.AddDays(-30);
+            if (!toDate.HasValue) toDate = DateTime.Now;
+
+            var result = await _unitOfWork.StockCards.GetPagedAsync(
+                pageNumber,
+                pageSize,
+                sc => (!productId.HasValue || sc.ProductId == productId) && 
+                      (!warehouseId.HasValue || sc.WarehouseId == warehouseId) &&
+                      (sc.TransactionDate.Date >= fromDate.Value.Date && sc.TransactionDate.Date <= toDate.Value.Date),
+                q => q.OrderByDescending(sc => sc.TransactionDate),
+                "Product,Warehouse"
+            );
+
+            var dtos = _mapper.Map<IEnumerable<StockCardDto>>(result.Items);
+
+            return Ok(ApiResponse<PagedResult<StockCardDto>>.SuccessResult(new PagedResult<StockCardDto>
+            {
+                Items = dtos,
+                PageNumber = result.PageNumber,
+                PageSize = result.PageSize,
+                TotalCount = result.TotalCount,
+                TotalPages = result.TotalPages
+            }));
+        }
+
+        [HttpPost("import")]
+        [Authorize(Roles = "Admin,WarehouseManager")]
+        public async Task<IActionResult> ImportInventory(IFormFile file)
+        {
+            var result = await _excelService.ImportInventoryAsync(file);
+            if (result.Errors.Count > 0 && result.SuccessCount == 0)
+            {
+                return BadRequest(ApiResponse<object>.FailureResult("Nhập tồn kho thất bại", result.Errors));
+            }
+
+            return Ok(ApiResponse<object>.SuccessResult(new { result.SuccessCount, result.Errors }, 
+                $"Đã nhập thành công {result.SuccessCount} dòng tồn kho."));
         }
     }
 }

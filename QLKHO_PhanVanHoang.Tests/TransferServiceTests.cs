@@ -3,6 +3,7 @@ using QLKHO_PhanVanHoang.Models;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Repositories;
 using QLKHO_PhanVanHoang.Services;
+using QLKHO_PhanVanHoang.DTOs;
 using System.Linq.Expressions;
 using Xunit;
 
@@ -25,11 +26,17 @@ namespace QLKHO_PhanVanHoang.Tests
         public async Task CreateTransferVoucherAsync_SameWarehouses_ShouldThrowArgumentException()
         {
             // Arrange
-            int warehouseId = 1;
+            var dto = new CreateTransferDto
+            {
+                FromWarehouseId = 1,
+                ToWarehouseId = 1,
+                Code = "TR001",
+                Notes = "Notes"
+            };
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => 
-                _transferService.CreateTransferVoucherAsync(warehouseId, warehouseId, "TR001", "Notes"));
+                _transferService.CreateTransferVoucherAsync(dto));
         }
 
         [Fact]

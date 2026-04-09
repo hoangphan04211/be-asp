@@ -10,15 +10,15 @@
 
 ---
 
-## 🏗️ Kiến trúc Hệ thống (System Architecture)
+##  Kiến trúc Hệ thống (System Architecture)
 
 Dự án được xây dựng dựa trên các tiêu chuẩn **Clean Code** và **Enterprise Design Patterns**, đảm bảo tính mở rộng (Scalability) và bảo trì (Maintainability) lâu dài.
 
-### 📂 Cấu trúc thư mục Chi tiết (Folder Structure)
+###  Cấu trúc thư mục Chi tiết (Folder Structure)
 
 1.  **`Controllers/` (Tầng Giao Diện - Presentation Layer)**
     - Tiếp nhận HTTP Request, điều hướng đến Service và phản hồi theo chuẩn RESTful API.
-    - Bao gồm: `AuthController`, `ProductsController`, `WarehousesController`, `InboundController`, `OutboundController`, `TransferController`, `CountingController`, `InventoryController`, `DashboardController`, `UsersController`, `AuditController`, `ExcelController`, `FileController`, `TrashController`.
+    - Bao gồm: `AuthController`, `ProductsController`, `WarehousesController`, `CategoriesController`, `SuppliersController`, `CustomersController` (Master Data), `InboundController`, `OutboundController`, `TransferController`, `CountingController`, `InventoryController`, `DashboardController`, `UsersController`, `AuditController`, `ExcelController`, `FileController`, `TrashController`.
 
 2.  **`Services/` (Tầng Nghiệp Vụ - Business Logic Layer)**
     - Xử lý logic nghiệp vụ cốt lõi: tính **giá vốn bình quân gia quyền (Weighted Average Cost)**, kiểm tra ngưỡng tồn kho, logic kiểm kê, chuyển kho.
@@ -46,15 +46,51 @@ Dự án được xây dựng dựa trên các tiêu chuẩn **Clean Code** và 
 
 13. **`QLKHO_PhanVanHoang.Tests/`** — **xUnit + Moq**, 11/11 test cases passed.
 
+14. **`HashTool/`** — Công cụ phụ trợ C# hỗ trợ tạo chuỗi băm (BCrypt Hash) để khởi tạo mật khẩu mặc định cho các tài khoản quản trị khi triển khai lần đầu.
+
+
+
+##  Tính Năng Nâng Cao (Advanced Features)
+
+Dự án triển khai các kỹ thuật xử lý dữ liệu chuẩn doanh nghiệp để đảm bảo tính toàn vẹn và minh bạch:
+
+### Kiểm soát Đồng thời (Optimistic Concurrency)
+- Sử dụng thuộc tính `RowVersion` (Timestamp) trên tất cả các Entity chính.
+- Ngăn chặn tình trạng ghi đè dữ liệu nếu hai người dùng cùng chỉnh sửa một bản ghi (ví dụ: cùng duyệt một phiếu nhập) tại cùng một thời điểm.
+
+### Cơ chế Xóa mềm (Soft Delete)
+- Tích hợp **Global Query Filter** trong EF Core.
+- Khi "xóa", hệ thống chỉ chuyển `IsDeleted = true`. Dữ liệu sẽ biến mất khỏi các truy vấn thông thường nhưng vẫn tồn tại trong database để phục vụ Audit hoặc khôi phục từ **Thùng rác (Trash Bin)**.
+
+### Hệ thống Nhật ký Thay đổi (Audit Logs)
+- Tự động ghi lại log cho mọi hành động `INSERT`, `UPDATE`, `DELETE`.
+- Lưu trữ giá trị cũ (`OldValues`) và giá trị mới (`NewValues`) dưới dạng JSON, giúp quản trị viên truy vết 100% lịch sử biến động của từng bản ghi.
+
 ---
 
-## 🗄️ Cấu trúc Database (Database Schema)
+## Quy Tắc Nghiệp Vụ (Business Rules)
+
+### Quy tắc Đặt mã Tự động (Auto-Code Generation)
+Hệ thống tự động sinh mã theo quy chuẩn chuyên nghiệp:
+- **Sản phẩm (SKU):** Định dạng `SP-XXXXX` (Ví dụ: `SP-00001`).
+- **Phiếu Nhập kho:** Định dạng `PN-YYYYMMDD-STT` (Ví dụ: `PN-20240409-001`).
+- **Phiếu Xuất kho:** Định dạng `PX-YYYYMMDD-STT` (Ví dụ: `PX-20240409-001`).
+- **Phiếu Chuyển kho:** Định dạng `DC-YYYYMMDD-STT`.
+- **Phiếu Kiểm kê:** Định dạng `KK-YYYYMMDD-STT`.
+
+### Ngưỡng Tồn kho & Cảnh báo
+- Hệ thống gửi thông báo thời gian thực qua **SignalR** khi số lượng hàng trong kho chạm ngưỡng `MinStockLevel` đã thiết lập.
+- Job ngầm (**Hangfire**) quét định kỳ hàng đêm để cảnh báo các lô hàng sắp hết hạn sử dụng.
+
+
+
+## Cấu trúc Database (Database Schema)
 
 Toàn bộ các bảng đều kế thừa từ `BaseEntity` với các trường audit tự động:
 
 > **BaseEntity**: `Id (PK)`, `CreatedAt`, `UpdatedAt`, `IsDeleted` *(Soft Delete)*
 
-### 👥 Nhóm Quản lý Người dùng
+### Nhóm Quản lý Người dùng
 
 ```
 ┌──────────────────────────────────────┐
@@ -79,7 +115,7 @@ Toàn bộ các bảng đều kế thừa từ `BaseEntity` với các trường
 └──────────────────────────────────────┘
 ```
 
-### 📦 Nhóm Danh mục Hàng hóa
+### Nhóm Danh mục Hàng hóa
 
 ```
 ┌──────────────────────────────────────┐   ┌───────────────────────────────────┐
@@ -105,7 +141,7 @@ Toàn bộ các bảng đều kế thừa từ `BaseEntity` với các trường
 └──────────────────────────────────────┘
 ```
 
-### 🏭 Nhóm Kho hàng & Tồn kho
+### Nhóm Kho hàng & Tồn kho
 
 ```
 ┌──────────────────────────────────────┐
@@ -145,7 +181,7 @@ Toàn bộ các bảng đều kế thừa từ `BaseEntity` với các trường
 └──────────────────────────────────────┘
 ```
 
-### 📋 Nhóm Phiếu Nhập kho (Inbound)
+### Nhóm Phiếu Nhập kho (Inbound)
 
 ```
 ┌──────────────────────────────────────┐
@@ -172,7 +208,7 @@ Toàn bộ các bảng đều kế thừa từ `BaseEntity` với các trường
 └──────────────────────────────────────┘
 ```
 
-### 📤 Nhóm Phiếu Xuất kho (Outbound)
+### Nhóm Phiếu Xuất kho (Outbound)
 
 ```
 ┌──────────────────────────────────────┐
@@ -198,7 +234,7 @@ Toàn bộ các bảng đều kế thừa từ `BaseEntity` với các trường
 └──────────────────────────────────────┘
 ```
 
-### 🔄 Nhóm Chuyển kho (Transfer)
+### Nhóm Chuyển kho (Transfer)
 
 ```
 ┌──────────────────────────────────────┐
@@ -222,7 +258,7 @@ Toàn bộ các bảng đều kế thừa từ `BaseEntity` với các trường
 └──────────────────────────────────────┘
 ```
 
-### 🔍 Nhóm Kiểm kê kho (Inventory Counting)
+### Nhóm Kiểm kê kho (Inventory Counting)
 
 ```
 ┌──────────────────────────────────────┐
@@ -264,7 +300,7 @@ Toàn bộ các bảng đều kế thừa từ `BaseEntity` với các trường
 └──────────────────────────────────────┘
 ```
 
-### 📝 Nhóm Hệ thống & Audit
+### Nhóm Hệ thống & Audit
 
 ```
 ┌──────────────────────────────────────┐
@@ -280,7 +316,7 @@ Toàn bộ các bảng đều kế thừa từ `BaseEntity` với các trường
 └──────────────────────────────────────┘
 ```
 
-### 📊 Sơ đồ quan hệ tổng quát (ERD Overview)
+### Sơ đồ quan hệ tổng quát (ERD Overview)
 
 ```
 Categories ──< Products >── Inventories >── Warehouses
@@ -298,7 +334,7 @@ SystemUsers >── Roles
 
 ---
 
-## 🛠️ Tính năng & Công nghệ (Features & Technologies)
+## Tính năng & Công nghệ (Features & Technologies)
 
 ### Tính năng Nổi bật
 - **Nhập / Xuất / Chuyển kho:** Vòng đời phiếu từ Draft → Completed/Dispatched trong database transaction.
@@ -313,64 +349,69 @@ SystemUsers >── Roles
 - **Bảo mật nâng cao:** Refresh Token, Quên mật khẩu qua OTP 6 chữ số gửi Email.
 - **Tự động đặt mã (Auto-Code):** Hệ thống thông minh tự động sinh mã SKU cho Sản phẩm (`SP-XXXXX`) và mã chứng từ (`PN`, `PX`, `DC`, `KK`) theo định dạng `MÃ-YYYYMMDD-STT`.
 - **Quản lý Thùng rác (Trash Bin):** Lưu trữ các mục đã xóa tạm (Products, Suppliers, Customers, Warehouses, Categories). Hỗ trợ khôi phục hoặc xóa vĩnh viễn (Chỉ dành cho Admin).
+- **Lưu trữ Ảnh Cloud đa kênh:** Tích hợp **Cloudinary API** để lưu trữ và tối ưu hóa hình ảnh sản phẩm, giúp giảm tải cho server và tăng tốc độ hiển thị.
 - **Xuất/Nhập Excel:** Import sản phẩm hàng loạt, xuất báo cáo tồn kho (ClosedXML).
 
 ### Công nghệ lõi
 
-| Thành phần | Công nghệ |
-|---|---|
-| Framework | .NET 8.0, ASP.NET Core 8 |
-| ORM | Entity Framework Core 8 |
-| Database | SQL Server |
-| Security | JWT Bearer, Refresh Token, BCrypt |
-| Real-time | SignalR (WebSockets) |
-| Background Jobs | Hangfire |
-| Mapping | AutoMapper |
-| Validation | FluentValidation |
-| Testing | xUnit, Moq |
-| Excel | ClosedXML |
-| Docs | Swagger UI (OpenAPI v3) |
+| Thành phần | Công nghệ | Chi tiết |
+|---|---|---|
+| Framework | .NET 8.0, ASP.NET Core 8 | C# 12, N-Tier Architecture |
+| ORM | Entity Framework Core 8 | LINQ, Generic Repository, Unit of Work |
+| Database | SQL Server | SQL Server 2022+, Azure SQL compatible |
+| Security | JWT Bearer, Refresh Token | BCrypt, Role-Based Access Control (RBAC) |
+| Real-time | SignalR (WebSockets) | Thông báo tức thời (Low stock, alerts) |
+| Background Jobs | Hangfire | Quản lý tác vụ định kỳ 23:59 hàng đêm |
+| Mapping | AutoMapper | Ánh xạ Domain Entity ↔ DTO tự động |
+| Validation | FluentValidation | Validate dữ liệu đầu vào chuẩn REST |
+| Testing | xUnit, Moq | 11/11 Test cases passed  |
+| Excel | ClosedXML | Xuất báo cáo, Import sản phẩm hàng loạt |
+| Media Store | Cloudinary | Lưu trữ ảnh sản phẩm trên Cloud |
+| Docs | Swagger UI (OpenAPI v3) | Tài liệu API tương tác trực quan |
 
 ---
 
-## 🔌 API Endpoints Tổng quan
+## API Endpoints Tổng quan
 
 | Module | Endpoint | Mô tả |
 |---|---|---|
-| Auth | `POST /api/Auth/login` | Đăng nhập |
-| Auth | `POST /api/Auth/refresh-token` | Làm mới Token |
-| Auth | `GET /api/Auth/profile` | Lấy thông tin cá nhân |
-| Auth | `POST /api/Auth/forgot-password` | Quên mật khẩu |
-| Auth | `POST /api/Auth/reset-password` | Đặt lại mật khẩu |
-| Users *(Admin)* | `GET/POST/PUT/DELETE /api/Users` | Quản lý nhân viên |
-| Products | `GET/POST/PUT/DELETE /api/Products` | Quản lý sản phẩm |
-| Warehouses | `GET/POST/PUT/DELETE /api/Warehouses` | Quản lý kho hàng |
-| Inbound | `GET /api/Inbound` | Danh sách phiếu nhập |
-| Inbound | `POST /api/Inbound/draft` | Tạo phiếu nháp |
-| Inbound | `POST /api/Inbound/approve/{id}` | Duyệt phiếu nhập |
-| Outbound | `GET /api/Outbound` | Danh sách phiếu xuất |
-| Outbound | `POST /api/Outbound/draft` | Tạo phiếu nháp |
-| Outbound | `POST /api/Outbound/approve/{id}` | Duyệt phiếu xuất |
-| Transfer | `GET /api/Transfer` | Danh sách phiếu chuyển |
-| Transfer | `POST /api/Transfer/create` | Tạo phiếu chuyển kho |
-| Transfer | `POST /api/Transfer/approve/{id}` | Duyệt phiếu chuyển kho |
-| Counting | `GET /api/Counting` | Danh sách phiếu kiểm kê |
-| Counting | `POST /api/Counting/draft` | Tạo phiếu kiểm nháp |
-| Counting | `POST /api/Counting/approve/{id}` | Duyệt & cân đối kho |
-| Inventory | `GET /api/Inventory` | Xem tồn kho hiện tại |
-| Inventory | `GET /api/Inventory/stock-cards` | Xem thẻ kho |
-| Dashboard | `GET /api/Dashboard/summary` | Thống kê tổng quan |
-| Dashboard | `GET /api/Dashboard/low-stock` | Danh sách hàng sắp hết |
-| Trash | `GET /api/Trash` | Danh sách mục đã xóa tạm |
-| Trash | `POST /api/Trash/restore/{type}/{id}` | Khôi phục dữ liệu |
-| Trash | `DELETE /api/Trash/hard-delete/{type}/{id}` | Xóa vĩnh viễn (Admin) |
-| Audit | `GET /api/Audit` | Nhật ký thay đổi dữ liệu |
-| Excel | `GET /api/Excel/export-inventory` | Xuất báo cáo tồn kho |
-| Excel | `POST /api/Excel/import-products` | Import sản phẩm từ Excel |
+| **Auth** | `POST /api/Auth/login` | Đăng nhập hệ thống |
+| **Auth** | `POST /api/Auth/refresh-token` | Làm mới phiên đăng nhập |
+| **Auth** | `GET /api/Auth/profile` | Lấy thông tin tài khoản hiện tại |
+| **Auth** | `POST /api/Auth/forgot-password` | Gửi yêu cầu quên mật khẩu |
+| **Auth** | `POST /api/Auth/reset-password` | Đặt lại mật khẩu qua OTP |
+| **Users** *(Admin)* | `GET/POST/PUT/DELETE /api/Users` | Quản trị tài khoản & phân quyền |
+| **Master Data** | `GET/POST/PUT/DELETE /api/Categories` | Quản lý loại hàng hóa |
+| **Master Data** | `GET/POST/PUT/DELETE /api/Suppliers` | Quản lý nhà cung cấp |
+| **Master Data** | `GET/POST/PUT/DELETE /api/Customers` | Quản lý khách hàng |
+| **Products** | `GET/POST/PUT/DELETE /api/Products` | Quản lý sản phẩm & giá vốn |
+| **Warehouses** | `GET/POST/PUT/DELETE /api/Warehouses` | Quản lý hệ thống kho bãi |
+| **Inbound** | `GET /api/Inbound` | Tra cứu phiếu nhập kho |
+| **Inbound** | `POST /api/Inbound/draft` | Tạo phiếu nhập nháp |
+| **Inbound** | `POST /api/Inbound/approve/{id}` | Duyệt phiếu & Tăng tồn |
+| **Outbound** | `GET /api/Outbound` | Tra cứu phiếu xuất kho |
+| **Outbound** | `POST /api/Outbound/draft` | Tạo phiếu xuất nháp |
+| **Outbound** | `POST /api/Outbound/approve/{id}` | Duyệt phiếu & Giảm tồn |
+| **Transfer** | `GET /api/Transfer` | Tra cứu phiếu chuyển kho |
+| **Transfer** | `POST /api/Transfer/create` | Lập lệnh điều chuyển |
+| **Transfer** | `POST /api/Transfer/approve/{id}` | Xác nhận điều chuyển hoàn tất |
+| **Counting** | `GET /api/Counting` | Danh sách phiếu kiểm kê |
+| **Counting** | `POST /api/Counting/draft` | Lập lịch kiểm kê |
+| **Counting** | `POST /api/Counting/approve/{id}` | Duyệt chênh lệch & Cân đối kho |
+| **Inventory** | `GET /api/Inventory` | Xem báo cáo tồn kho hiện thời |
+| **Inventory** | `GET /api/Inventory/stock-cards` | Xem lịch sử thẻ kho chi tiết |
+| **Dashboard** | `GET /api/Dashboard/summary` | Thống kê số liệu tổng hợp |
+| **Dashboard** | `GET /api/Dashboard/low-stock` | Cảnh báo hàng dưới ngưỡng tồn |
+| **Trash** | `GET /api/Trash` | Xem danh mục đã xóa tạm |
+| **Trash** | `POST /api/Trash/restore/{type}/{id}` | Khôi phục dữ liệu đã xóa |
+| **Trash** | `DELETE /api/Trash/hard-delete/{type}/{id}` | Xóa vĩnh viễn (Chỉ Admin) |
+| **Audit** | `GET /api/Audit` | Nhật ký truy vết thay đổi dữ liệu |
+| **Excel** | `GET /api/Excel/export-inventory` | Xuất báo cáo tồn kho ra Excel |
+| **Excel** | `POST /api/Excel/import-products` | Nhập sản phẩm hàng loạt từ Excel |
 
 ---
 
-## 🧪 Unit Testing
+## Unit Testing
 
 Dự án sử dụng **xUnit** + **Moq** để kiểm thử toàn bộ logic nghiệp vụ.
 
@@ -386,7 +427,7 @@ dotnet test
 | `OutboundServiceTests` | 2 | Duyệt phiếu xuất, phiếu đã xuất |
 | `TransferServiceTests` | 2 | Chuyển kho hợp lệ, kho giống nhau |
 | `CountingServiceTests` | 2 | Tăng tồn sau kiểm kê, giảm tồn sau kiểm kê |
-| **Tổng cộng** | **11** | ✅ **11/11 PASSED** |
+| **Tổng cộng** | **11** | **11/11 PASSED** |
 
 ---
 
@@ -398,6 +439,11 @@ dotnet test
     {
       "ConnectionStrings": {
         "DefaultConnection": "Server=.;Database=QLKHO_DB;Trusted_Connection=True;"
+      },
+      "CloudinarySettings": {
+        "CloudName": "YOUR_CLOUD_NAME",
+        "ApiKey": "YOUR_API_KEY",
+        "ApiSecret": "YOUR_API_SECRET"
       },
       "Jwt": {
         "Key": "your-secret-key-min-32-chars",
@@ -418,7 +464,23 @@ dotnet test
 
 ---
 
-## ✍️ Tác giả & Đóng góp
+---
+
+## Giao diện Người dùng (Frontend)
+
+Hệ thống đi kèm với giao diện Web hiện đại, tối ưu cho trải nghiệm người dùng doanh nghiệp:
+
+- **Công nghệ Base:** React 18, TypeScript, Vite.
+- **UI Library:** Ant Design (Enterprise UI kit).
+- **State Management:** Redux Toolkit / React Context.
+- **Tính năng chính:** Dashboard trực quan, Form nhập liệu đa dòng, In phiếu trực tiếp, quản lý kho kéo-thả.
+
+> Thư mục nguồn: `frontend-wms/`
+
+---
+
+## Tác giả & Đóng góp
+
 
 - **Chủ dự án:** Phan Van Hoang
 - **GitHub:** [hoangphan04211](https://github.com/hoangphan04211)

@@ -199,7 +199,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             var result = await _unitOfWork.Customers.GetPagedAsync(
                 @params.PageNumber,
                 @params.PageSize,
-                c => string.IsNullOrEmpty(@params.SearchTerm) || c.Name.Contains(@params.SearchTerm) || (c.Code != null && c.Code.Contains(@params.SearchTerm)),
+                c => (string.IsNullOrEmpty(@params.SearchTerm) || c.Name.Contains(@params.SearchTerm) || (c.Code != null && c.Code.Contains(@params.SearchTerm))) && !c.IsDeleted,
                 q => q.OrderByDescending(c => c.CreatedAt));
 
             var dtos = _mapper.Map<IEnumerable<CustomerDto>>(result.Items);

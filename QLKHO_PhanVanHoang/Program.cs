@@ -92,8 +92,15 @@ namespace QLKHO_PhanVanHoang
 
             // === QUAN TRỌNG: Đăng ký DbContext với SQL Server ===
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                Console.WriteLine("CRITICAL: Connection string 'DefaultConnection' is empty! Check your Environment Variables.");
+            }
+
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 31)))
+                options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 31)), 
+                    mySqlOptions => mySqlOptions.EnableRetryOnFailure())
                        // Enable logging chi tiết (chỉ dùng khi phát triển)
                        .EnableSensitiveDataLogging()
                        .LogTo(Console.WriteLine, LogLevel.Information));
@@ -196,9 +203,15 @@ namespace QLKHO_PhanVanHoang
                 {
                     Console.WriteLine($"✗ Lỗi khi kết nối database: {ex.Message}");
                     Console.WriteLine("Vui lòng kiểm tra:");
-                    Console.WriteLine("1. SQL Server đã được bật chưa?");
-                    Console.WriteLine("2. Tên server trong connection string có đúng không?");
-                    Console.WriteLine("3. Bạn đã cài đặt SQL Server chưa?");
+                    Console.WriteLine("1. MySQL trên cPanel đã bật và cho phép 'Remote MySQL' (%) chưa?");
+                    // An toàn: Không in toàn bộ connection string nhưng in các phần quan trọng để debug
+                    if (!string.IsNullOrEmpty(connectionString)) {
+                         var parts = connectionString.Split(';');
+                         var server = parts.FirstOrDefault(p => p.StartsWith("Server=", StringComparison.OrdinalIgnoreCase));
+                         var db = parts.FirstOrDefault(p => p.StartsWith("Database=", StringComparison.OrdinalIgnoreCase));
+                         Console.WriteLine($"2. Kiểm tra thông số: {server}, {db}");
+                    }
+                    Console.WriteLine("3. User/Password trong Connection String có đúng không?");
                 }
             }
 

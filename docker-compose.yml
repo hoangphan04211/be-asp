@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Password123
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+
+  api:
+    build:
+      context: .
+      dockerfile: QLKHO_PhanVanHoang/Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=database;Database=WarehouseDb;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=True;
+      - Jwt__Key=ThisIsALongSecurityKeyForJWTSigning12345
+      - Jwt__Issuer=WMS_Enterprise
+      - Jwt__Audience=WMS_Client
+    ports:
+      - "5000:80"
+    depends_on:
+      - database
+
+  frontend:
+    build:
+      context: ./frontend-wms
+    environment:
+      - VITE_API_URL=http://localhost:5000/api
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+volumes:
+  mssql_data:

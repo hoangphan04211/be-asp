@@ -47,7 +47,7 @@ namespace QLKHO_PhanVanHoang.Jobs
                 }
                 body += "</ul>";
 
-                await emailService.SendEmailAsync("admin@wms.com", subject, body);
+                await emailService.SendEmailAsync("phan21828@gmail.com", subject, body);
             }
 
             Log.Information("Job quét tồn kho hoàn tất!");

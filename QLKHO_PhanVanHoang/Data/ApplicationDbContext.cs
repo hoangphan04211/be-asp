@@ -41,6 +41,7 @@ namespace QLKHO_PhanVanHoang.Data
         public DbSet<Role> Roles { get; set; } = null!;
         public DbSet<SystemUser> SystemUsers { get; set; } = null!;
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
+        public DbSet<Permission> Permissions { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -59,6 +60,74 @@ namespace QLKHO_PhanVanHoang.Data
             modelBuilder.Entity<TransferVoucher>().HasIndex(t => t.Code).IsUnique();
             modelBuilder.Entity<SystemUser>().HasIndex(u => u.Username).IsUnique();
             modelBuilder.Entity<Role>().HasIndex(r => r.Name).IsUnique();
+            modelBuilder.Entity<Permission>().HasIndex(p => p.Code).IsUnique();
+
+            // Many-to-Many Permission-Role
+            modelBuilder.Entity<Role>()
+                .HasMany(p => p.Permissions)
+                .WithMany(p => p.Roles)
+                .UsingEntity<Dictionary<string, object>>(
+                    "RolePermissions",
+                    j => j.HasOne<Permission>().WithMany().HasForeignKey("PermissionId"),
+                    j => j.HasOne<Role>().WithMany().HasForeignKey("RoleId"),
+                    j =>
+                    {
+                        j.HasKey("RoleId", "PermissionId");
+                        j.HasData(
+                            // Gán toàn bộ quyền cho Admin (Id=1)
+                            new { RoleId = 1, PermissionId = 1 },
+                            new { RoleId = 1, PermissionId = 2 },
+                            new { RoleId = 1, PermissionId = 3 },
+                            new { RoleId = 1, PermissionId = 4 },
+                            new { RoleId = 1, PermissionId = 5 },
+                            new { RoleId = 1, PermissionId = 6 },
+                            new { RoleId = 1, PermissionId = 7 },
+                            new { RoleId = 1, PermissionId = 8 },
+                            new { RoleId = 1, PermissionId = 9 },
+                            new { RoleId = 1, PermissionId = 10 },
+                            new { RoleId = 1, PermissionId = 11 },
+                            new { RoleId = 1, PermissionId = 12 },
+                            new { RoleId = 1, PermissionId = 13 },
+                            new { RoleId = 1, PermissionId = 14 },
+                            new { RoleId = 1, PermissionId = 15 },
+                            new { RoleId = 1, PermissionId = 16 },
+                            new { RoleId = 1, PermissionId = 17 },
+                            new { RoleId = 1, PermissionId = 18 },
+                            new { RoleId = 1, PermissionId = 19 },
+                            new { RoleId = 1, PermissionId = 20 }
+                        );
+                    });
+
+            // Seed Permissions
+            modelBuilder.Entity<Permission>().HasData(
+                // Master Data (1-5)
+                new Permission { Id = 1, Code = "PRODUCT_VIEW", Name = "Xem sản phẩm", Group = "Sản phẩm", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 2, Code = "PRODUCT_EDIT", Name = "Sửa/Xóa sản phẩm", Group = "Sản phẩm", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 3, Code = "MASTER_DATA_VIEW", Name = "Xem danh mục chung", Group = "Danh mục", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 4, Code = "MASTER_DATA_EDIT", Name = "Quản lý danh mục chung", Group = "Danh mục", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 5, Code = "WAREHOUSE_VIEW", Name = "Xem kho hàng", Group = "Danh mục", CreatedBy = "system", CreatedAt = DateTime.Now },
+                
+                // Operations (6-15)
+                new Permission { Id = 6, Code = "INBOUND_VIEW", Name = "Xem phiếu nhập", Group = "Vận hành", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 7, Code = "INBOUND_CREATE", Name = "Tạo phiếu nhập", Group = "Vận hành", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 8, Code = "INBOUND_APPROVE", Name = "Duyệt phiếu nhập", Group = "Vận hành", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 9, Code = "OUTBOUND_VIEW", Name = "Xem phiếu xuất", Group = "Vận hành", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 10, Code = "OUTBOUND_CREATE", Name = "Tạo phiếu xuất", Group = "Vận hành", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 11, Code = "OUTBOUND_APPROVE", Name = "Duyệt phiếu xuất", Group = "Vận hành", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 12, Code = "TRANSFER_VIEW", Name = "Xem điều chuyển", Group = "Vận hành", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 13, Code = "TRANSFER_CREATE", Name = "Tạo điều chuyển", Group = "Vận hành", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 14, Code = "COUNTING_VIEW", Name = "Xem kiểm kê", Group = "Vận hành", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 15, Code = "COUNTING_APPROVE", Name = "Duyệt kiểm kê", Group = "Vận hành", CreatedBy = "system", CreatedAt = DateTime.Now },
+
+                // Reports (16-17)
+                new Permission { Id = 16, Code = "REPORT_VIEW", Name = "Xem báo cáo tổn kho", Group = "Báo cáo", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 17, Code = "STOCK_CARD_VIEW", Name = "Xem thẻ kho", Group = "Báo cáo", CreatedBy = "system", CreatedAt = DateTime.Now },
+
+                // System (18-20)
+                new Permission { Id = 18, Code = "USER_MANAGEMENT", Name = "Quản lý nhân viên", Group = "Hệ thống", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 19, Code = "SYSTEM_LOGS", Name = "Xem nhật ký hệ thống", Group = "Hệ thống", CreatedBy = "system", CreatedAt = DateTime.Now },
+                new Permission { Id = 20, Code = "SYSTEM_TRASH", Name = "Quản lý thùng rác", Group = "Hệ thống", CreatedBy = "system", CreatedAt = DateTime.Now }
+            );
 
             // Automatic Global Query Filter (Soft Delete) & RowVersion
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
@@ -87,13 +156,12 @@ namespace QLKHO_PhanVanHoang.Data
             
             modelBuilder.Entity<TransferVoucherDetail>().HasOne(d => d.TransferVoucher).WithMany(t => t.Details).HasForeignKey(d => d.TransferVoucherId).OnDelete(DeleteBehavior.Cascade);
 
-            // Seed Roles
+            // Seed Rules (Mã nguồn đã có sẵn)
             modelBuilder.Entity<Role>().HasData(
                 new Role { Id = 1, Name = "Admin", Description = "Toàn quyền hệ thống", CreatedAt = new DateTime(2026, 4, 1), CreatedBy = "system", IsDeleted = false },
                 new Role { Id = 2, Name = "WarehouseManager", Description = "Quản lý kho và duyệt phiếu", CreatedAt = new DateTime(2026, 4, 1), CreatedBy = "system", IsDeleted = false },
                 new Role { Id = 3, Name = "Employee", Description = "Nhân viên kho thực thi", CreatedAt = new DateTime(2026, 4, 1), CreatedBy = "system", IsDeleted = false }
             );
-
         }
 
         private static System.Linq.Expressions.LambdaExpression CreateSoftDeleteFilter(Type type)

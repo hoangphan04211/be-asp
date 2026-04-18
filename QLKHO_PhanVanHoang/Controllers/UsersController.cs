@@ -160,14 +160,5 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<object>.SuccessResult(null, "Xóa tài khoản thành công."));
         }
 
-        /// <summary>
-        /// Lấy danh sách Roles
-        /// </summary>
-        [HttpGet("roles")]
-        public async Task<IActionResult> GetRoles()
-        {
-            var roles = await _unitOfWork.Roles.GetAllAsync();
-            return Ok(ApiResponse<IEnumerable<Role>>.SuccessResult(roles));
-        }
     }
 }

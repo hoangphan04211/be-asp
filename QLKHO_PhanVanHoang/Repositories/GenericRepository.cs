@@ -31,9 +31,21 @@ namespace QLKHO_PhanVanHoang.Repositories
             return await _dbSet.ToListAsync();
         }
 
-        public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> expression)
+        public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>>? expression = null, string includeProperties = "")
         {
-            return await _dbSet.Where(expression).ToListAsync();
+            IQueryable<T> query = _dbSet;
+
+            if (expression != null)
+            {
+                query = query.Where(expression);
+            }
+
+            foreach (var includeProperty in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                query = query.Include(includeProperty);
+            }
+
+            return await query.ToListAsync();
         }
 
         public async Task AddAsync(T entity)

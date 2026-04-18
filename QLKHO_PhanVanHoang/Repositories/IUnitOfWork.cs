@@ -28,6 +28,7 @@ namespace QLKHO_PhanVanHoang.Repositories
         IGenericRepository<Role> Roles { get; }
         IGenericRepository<SystemUser> SystemUsers { get; }
         IGenericRepository<AuditLog> AuditLogs { get; }
+        IGenericRepository<Permission> Permissions { get; }
 
         Task<int> CompleteAsync();
         

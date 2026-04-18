@@ -18,6 +18,7 @@ namespace QLKHO_PhanVanHoang.DTOs
         public string RefreshToken { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
+        public List<string> PermissionCodes { get; set; } = new();
     }
 
     public class RegisterRequestDto
@@ -70,5 +71,18 @@ namespace QLKHO_PhanVanHoang.DTOs
     public class AdminResetPasswordDto
     {
         public string NewPassword { get; set; } = string.Empty;
+    }
+
+    public class RoleDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public List<string> PermissionCodes { get; set; } = new();
+    }
+
+    public class UpdateRolePermissionsDto
+    {
+        public List<string> PermissionCodes { get; set; } = new();
     }
 }

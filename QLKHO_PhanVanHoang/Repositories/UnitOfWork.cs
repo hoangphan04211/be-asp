@@ -37,6 +37,7 @@ namespace QLKHO_PhanVanHoang.Repositories
             Roles = new GenericRepository<Role>(_context);
             SystemUsers = new GenericRepository<SystemUser>(_context);
             AuditLogs = new GenericRepository<AuditLog>(_context);
+            Permissions = new GenericRepository<Permission>(_context);
         }
 
         public IGenericRepository<Product> Products { get; private set; }
@@ -61,6 +62,7 @@ namespace QLKHO_PhanVanHoang.Repositories
         public IGenericRepository<Role> Roles { get; private set; }
         public IGenericRepository<SystemUser> SystemUsers { get; private set; }
         public IGenericRepository<AuditLog> AuditLogs { get; private set; }
+        public IGenericRepository<Permission> Permissions { get; private set; }
 
         public async Task<int> CompleteAsync()
         {

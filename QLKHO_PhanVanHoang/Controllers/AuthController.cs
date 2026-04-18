@@ -34,33 +34,48 @@ namespace QLKHO_PhanVanHoang.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto loginDto)
         {
-            var userList = await _unitOfWork.SystemUsers.FindAsync(u => u.Username == loginDto.Username);
-            var user = userList.FirstOrDefault();
-            
-            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
+            try 
             {
-                return Unauthorized(ApiResponse<object>.FailureResult("Sai tài khoản hoặc mật khẩu"));
+                var userList = await _unitOfWork.SystemUsers.FindAsync(u => u.Username == loginDto.Username, "Role.Permissions");
+                var user = userList.FirstOrDefault();
+                
+                bool isPasswordValid = false;
+                try 
+                {
+                    isPasswordValid = user != null && !string.IsNullOrEmpty(user.PasswordHash) && BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash);
+                }
+                catch { /* Invalid hash format */ }
+
+                if (!isPasswordValid)
+                {
+                    return Unauthorized(ApiResponse<object>.FailureResult("Sai tài khoản hoặc mật khẩu hoặc định dạng mật khẩu không hợp lệ"));
+                }
+
+                var roleName = user!.Role?.Name ?? "Employee";
+                var permissions = user.Role?.Permissions?.Select(p => p.Code).ToList() ?? new List<string>();
+
+                var accessToken = GenerateAccessToken(user, roleName);
+                var refreshToken = GenerateRefreshToken();
+
+                // Lưu Refresh Token vào User
+                user.RefreshToken = refreshToken;
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // Hết hạn sau 7 ngày
+                _unitOfWork.SystemUsers.Update(user);
+                await _unitOfWork.CompleteAsync();
+
+                return Ok(ApiResponse<LoginResponseDto>.SuccessResult(new LoginResponseDto
+                {
+                    Token = accessToken,
+                    RefreshToken = refreshToken,
+                    FullName = user.FullName,
+                    Role = roleName,
+                    PermissionCodes = permissions
+                }, "Đăng nhập thành công"));
             }
-
-            var role = await _unitOfWork.Roles.GetByIdAsync(user.RoleId);
-            var roleName = role?.Name ?? "Employee";
-
-            var accessToken = GenerateAccessToken(user, roleName);
-            var refreshToken = GenerateRefreshToken();
-
-            // Lưu Refresh Token vào User
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // Hết hạn sau 7 ngày
-            _unitOfWork.SystemUsers.Update(user);
-            await _unitOfWork.CompleteAsync();
-
-            return Ok(ApiResponse<LoginResponseDto>.SuccessResult(new LoginResponseDto
+            catch (Exception ex)
             {
-                Token = accessToken,
-                RefreshToken = refreshToken,
-                FullName = user.FullName,
-                Role = roleName
-            }, "Đăng nhập thành công"));
+                return StatusCode(500, ApiResponse<object>.FailureResult($"Lỗi hệ thống: {ex.Message} | Trace: {ex.StackTrace}"));
+            }
         }
 
         [HttpPost("refresh-token")]

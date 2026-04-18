@@ -21,43 +21,48 @@ namespace QLKHO_PhanVanHoang.Services
 
         public async Task<byte[]> ExportInventoryReportAsync()
         {
-            var inventories = await _unitOfWork.Inventories.GetAllAsync();
+            var inventories = await _unitOfWork.Inventories.FindAsync(null, "Product.Category,Warehouse");
             
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("Báo Cáo Tồn Kho");
             
             // Header
-            worksheet.Cell(1, 1).Value = "ID Tồn Kho";
-            worksheet.Cell(1, 2).Value = "ID Sản Phẩm";
-            worksheet.Cell(1, 3).Value = "Mã Kho";
-            worksheet.Cell(1, 4).Value = "Số Lô (Lot)";
-            worksheet.Cell(1, 5).Value = "Tồn Thực Tế";
-            worksheet.Cell(1, 6).Value = "Hàng Đặt Trước";
-            worksheet.Cell(1, 7).Value = "Tồn Có Thể Bán";
-            worksheet.Cell(1, 8).Value = "Vị Trí Lưu Trữ";
+            worksheet.Cell(1, 1).Value = "Mã Sản Phẩm (SKU)";
+            worksheet.Cell(1, 2).Value = "Tên Sản Phẩm";
+            worksheet.Cell(1, 3).Value = "Danh Mục";
+            worksheet.Cell(1, 4).Value = "Kho Hàng";
+            worksheet.Cell(1, 5).Value = "Số Lô (Lot)";
+            worksheet.Cell(1, 6).Value = "Tồn Thực Tế";
+            worksheet.Cell(1, 7).Value = "Hàng Đặt Trước";
+            worksheet.Cell(1, 8).Value = "Tồn Có Thể Bán";
+            worksheet.Cell(1, 9).Value = "Vị Trí";
 
             // Format Header
             var headerRow = worksheet.Row(1);
             headerRow.Style.Font.Bold = true;
             headerRow.Style.Fill.BackgroundColor = XLColor.AirForceBlue;
             headerRow.Style.Font.FontColor = XLColor.White;
+            headerRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
             // Data rows
             int row = 2;
             foreach (var item in inventories)
             {
-                worksheet.Cell(row, 1).Value = item.Id;
-                worksheet.Cell(row, 2).Value = item.ProductId;
-                worksheet.Cell(row, 3).Value = item.WarehouseId;
-                worksheet.Cell(row, 4).Value = item.LotNumber ?? "N/A";
-                worksheet.Cell(row, 5).Value = item.QuantityOnHand;
-                worksheet.Cell(row, 6).Value = item.ReservedQuantity;
-                worksheet.Cell(row, 7).Value = item.AvailableQuantity;
-                worksheet.Cell(row, 8).Value = item.LocationInWarehouse ?? "";
+                worksheet.Cell(row, 1).Value = item.Product?.SkuCode ?? "N/A";
+                worksheet.Cell(row, 2).Value = item.Product?.Name ?? "N/A";
+                worksheet.Cell(row, 3).Value = item.Product?.Category?.Name ?? "N/A";
+                worksheet.Cell(row, 4).Value = item.Warehouse?.Name ?? "N/A";
+                worksheet.Cell(row, 5).Value = item.LotNumber ?? "N/A";
+                worksheet.Cell(row, 6).Value = item.QuantityOnHand;
+                worksheet.Cell(row, 7).Value = item.ReservedQuantity;
+                worksheet.Cell(row, 8).Value = item.AvailableQuantity;
+                worksheet.Cell(row, 9).Value = item.LocationInWarehouse ?? "";
                 row++;
             }
 
             worksheet.Columns().AdjustToContents();
+            worksheet.RangeUsed().Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            worksheet.RangeUsed().Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);

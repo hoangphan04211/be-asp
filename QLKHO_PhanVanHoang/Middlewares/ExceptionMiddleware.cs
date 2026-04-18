@@ -29,6 +29,7 @@ namespace QLKHO_PhanVanHoang.Middlewares
             }
             catch (Exception ex)
             {
+                System.IO.File.AppendAllText("debug_error.log", $"\n[{DateTime.Now}] {ex.Message}\n{ex.StackTrace}\n");
                 _logger.LogError(ex, "Lỗi hệ thống: {Message}", ex.Message);
                 await HandleExceptionAsync(httpContext, ex);
             }

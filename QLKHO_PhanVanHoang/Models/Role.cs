@@ -15,5 +15,6 @@ namespace QLKHO_PhanVanHoang.Models
         public string? Description { get; set; }
 
         public virtual ICollection<SystemUser> Users { get; set; } = new List<SystemUser>();
+        public virtual ICollection<Permission> Permissions { get; set; } = new List<Permission>();
     }
 }

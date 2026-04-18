@@ -1,12 +1,18 @@
-# 📦 QLKHO_PHANVANHOANG - Warehouse Management System API
+# 📦 QLKHO_PHANVANHOANG - Warehouse Management System (WMS) v2.0
+## GIẢI PHÁP QUẢN LÝ KHO DOANH NGHIỆP TOÀN DIỆN (100% COMPLETE)
 
-[![version](https://img.shields.io/badge/version-1.1.0-blue)](https://github.com/hoangphan04211/be-asp)
+[![version](https://img.shields.io/badge/version-2.0.0-blue)](https://github.com/hoangphan04211/be-asp)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![dotnet](https://img.shields.io/badge/.NET-8.0-blueviolet)](https://dotnet.microsoft.com/download/dotnet/8.0)
-[![tests](https://img.shields.io/badge/tests-11%2F11%20passed-brightgreen)](#unit-testing)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/hoangphan04211/be-asp/pulls)
+[![Docker](https://img.shields.io/badge/Docker-Enabled-brightgreen)](https://www.docker.com/)
 
-**Hệ thống Quản lý Kho (WMS) API thông minh** là giải pháp Backend chuyên nghiệp được thiết kế theo mô hình kiến trúc phân lớp (N-Tier Architecture), hỗ trợ doanh nghiệp tối ưu hóa quy trình lưu trữ, theo dõi biến động hàng hóa và kiểm soát giá vốn theo thời gian thực.
+---
+
+### 🌟 Tính năng Mới (New Features)
+1. **Phân quyền Động (Dynamic RBAC):** Quản lý quyền hạn chi tiết đến từng nút bấm và menu.
+2. **In ấn & Xuất bản (Printing & Reporting):** In phiếu PDF chuyên nghiệp, xuất Excel tồn kho.
+3. **Docker Ready:** Triển khai nhanh chóng với Docker Compose.
+4. **UX/UI Polish:** Giao diện Glassmorphism hiện đại, thông báo thời gian thực SignalR.
 
 ---
 

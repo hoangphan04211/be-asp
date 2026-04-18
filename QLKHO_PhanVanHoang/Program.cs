@@ -11,6 +11,7 @@ using QLKHO_PhanVanHoang.Jobs;
 using QLKHO_PhanVanHoang.Middlewares;
 using QLKHO_PhanVanHoang.Hubs;
 using Hangfire;
+using Hangfire.MySql;
 using System.Reflection;
 using QLKHO_PhanVanHoang.Helpers;
 using FluentValidation.AspNetCore;
@@ -90,9 +91,9 @@ namespace QLKHO_PhanVanHoang
             });
 
             // === QUAN TRỌNG: Đăng ký DbContext với SQL Server ===
-            // Đọc chuỗi kết nối từ appsettings.json
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+                options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 31)))
                        // Enable logging chi tiết (chỉ dùng khi phát triển)
                        .EnableSensitiveDataLogging()
                        .LogTo(Console.WriteLine, LogLevel.Information));
@@ -139,8 +140,14 @@ namespace QLKHO_PhanVanHoang
             builder.Services.AddHangfire(config => config
                 .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
                 .UseSimpleAssemblyNameTypeSerializer()
-                .UseRecommendedSerializerSettings()
-                .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+                .UseStorage(new MySqlStorage(connectionString, new MySqlStorageOptions
+                {
+                    TransactionIsolationLevel = System.Transactions.IsolationLevel.ReadCommitted,
+                    QueuePollInterval = TimeSpan.FromSeconds(15),
+                    JobExpirationCheckInterval = TimeSpan.FromHours(1),
+                    CountersAggregateInterval = TimeSpan.FromMinutes(5),
+                    PrepareSchemaIfNecessary = true
+                })));
             builder.Services.AddHangfireServer();
 
             // Cấu hình JWT Authentication

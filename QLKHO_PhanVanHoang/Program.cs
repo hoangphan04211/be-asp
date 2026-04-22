@@ -110,7 +110,7 @@ namespace QLKHO_PhanVanHoang
             {
                 options.AddPolicy("AllowAll", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173") // Chỉ định rõ nguồn frontend
+                    policy.SetIsOriginAllowed(origin => true) // Cho phép tất cả các nguồn (Vercel, Localhost...)
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials(); // Bắt buộc cho SignalR
@@ -218,16 +218,13 @@ namespace QLKHO_PhanVanHoang
 
             // ===== 3. CẤU HÌNH PIPELINE XỬ LÝ REQUEST =====
 
-            // Cấu hình Swagger (chỉ dùng khi phát triển)
-            if (app.Environment.IsDevelopment())
+            // Cấu hình Swagger
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
             {
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "QLKHO API V1");
-                    c.RoutePrefix = string.Empty; // Swagger ở trang chủ (https://localhost:xxxx)
-                });
-            }
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "QLKHO API V1");
+                c.RoutePrefix = string.Empty; // Swagger ở trang chủ
+            });
 
             // Sử dụng CORS
             app.UseCors("AllowAll");

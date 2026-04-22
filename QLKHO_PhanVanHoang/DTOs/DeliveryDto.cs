@@ -31,6 +31,8 @@ namespace QLKHO_PhanVanHoang.DTOs
         public System.DateTime DeliveryDate { get; set; }
         public string? Notes { get; set; }
         public decimal TotalAmount { get; set; }
+        public string CreatedBy { get; set; } = string.Empty;
+        public string CreatedByName { get; set; } = string.Empty;
         public List<DeliveryVoucherDetailDto> Details { get; set; } = new List<DeliveryVoucherDetailDto>();
     }
 

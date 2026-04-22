@@ -110,9 +110,10 @@ namespace QLKHO_PhanVanHoang
             {
                 options.AddPolicy("AllowAll", policy =>
                 {
-                    policy.AllowAnyOrigin()      // Cho phép mọi nguồn gốc
-                          .AllowAnyMethod()      // Cho phép mọi phương thức (GET, POST, PUT, DELETE)
-                          .AllowAnyHeader();     // Cho phép mọi header
+                    policy.WithOrigins("http://localhost:5173") // Chỉ định rõ nguồn frontend
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials(); // Bắt buộc cho SignalR
                 });
             });
 

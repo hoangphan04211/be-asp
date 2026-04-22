@@ -79,24 +79,42 @@ namespace QLKHO_PhanVanHoang.Services
         {
             if (quantity <= 0) throw new ArgumentException("Số lượng xuất phải lớn hơn 0");
 
-            var inventories = await _unitOfWork.Inventories.FindAsync(i => i.ProductId == productId && i.WarehouseId == warehouseId && i.LotNumber == lotNumber);
-            var inventory = inventories.FirstOrDefault();
+            Inventory? inventory = null;
 
-            if (inventory == null || inventory.QuantityOnHand < quantity)
+            // 1. Thử tìm theo số lô được chỉ định và phải còn hàng
+            if (!string.IsNullOrEmpty(lotNumber))
             {
-                throw new Exception($"Tồn kho không đủ cho sản phẩm ID {productId}. Tồn hiện tại: {inventory?.QuantityOnHand ?? 0}, yêu cầu: {quantity}");
+                var inventories = await _unitOfWork.Inventories.FindAsync(i => i.ProductId == productId && i.WarehouseId == warehouseId && i.LotNumber == lotNumber && i.QuantityOnHand >= quantity);
+                inventory = inventories.FirstOrDefault();
+            }
+
+            // 2. Nếu không tìm thấy lô được chỉ định (hoặc lô đó không đủ hàng), tìm bất kỳ lô nào còn đủ hàng trong kho đó
+            if (inventory == null)
+            {
+                var availableInventories = await _unitOfWork.Inventories.FindAsync(i => i.ProductId == productId && i.WarehouseId == warehouseId && i.QuantityOnHand >= quantity);
+                inventory = availableInventories.OrderByDescending(i => i.QuantityOnHand).FirstOrDefault();
+            }
+
+            // 3. Nếu vẫn không thấy lô nào đủ, báo lỗi chi tiết
+            if (inventory == null)
+            {
+                var totalInWarehouse = (await _unitOfWork.Inventories.FindAsync(i => i.ProductId == productId && i.WarehouseId == warehouseId)).Sum(i => i.QuantityOnHand);
+                throw new Exception($"Không có lô hàng nào đủ {quantity} sản phẩm. Tổng tồn tất cả các lô trong kho này là: {totalInWarehouse}. Vui lòng kiểm tra lại số lượng xuất.");
             }
 
             decimal beforeQty = inventory.QuantityOnHand;
             inventory.QuantityOnHand -= quantity;
             _unitOfWork.Inventories.Update(inventory);
+            
+            // Ghi nhận số lô thực tế đã xuất vào thẻ kho
+            string? actualLot = inventory.LotNumber;
 
             // Ghi thẻ kho
             var stockCard = new StockCard
             {
                 ProductId = productId,
                 WarehouseId = warehouseId,
-                LotNumber = lotNumber,
+                LotNumber = actualLot,
                 TransactionType = "Outbound",
                 ReferenceCode = referenceCode,
                 BeforeQuantity = beforeQty,

@@ -80,6 +80,14 @@ namespace QLKHO_PhanVanHoang.Controllers
             }));
         }
 
+        [HttpGet("stock-check")]
+        public async Task<IActionResult> GetProductStock([FromQuery] int productId, [FromQuery] int warehouseId)
+        {
+            var inventories = await _unitOfWork.Inventories.FindAsync(i => i.ProductId == productId && i.WarehouseId == warehouseId);
+            var total = inventories.Sum(i => i.QuantityOnHand);
+            return Ok(ApiResponse<decimal>.SuccessResult(total));
+        }
+
         [HttpPost("import")]
         [Authorize(Roles = "Admin,WarehouseManager")]
         public async Task<IActionResult> ImportInventory(IFormFile file)

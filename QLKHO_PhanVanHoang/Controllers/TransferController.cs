@@ -1,11 +1,14 @@
+using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Models;
 using QLKHO_PhanVanHoang.Repositories;
 using QLKHO_PhanVanHoang.Services;
+using QLKHO_PhanVanHoang.DTOs;
 
 namespace QLKHO_PhanVanHoang.Controllers
 {
@@ -16,11 +19,13 @@ namespace QLKHO_PhanVanHoang.Controllers
     {
         private readonly ITransferService _transferService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public TransferController(ITransferService transferService, IUnitOfWork unitOfWork)
+        public TransferController(ITransferService transferService, IUnitOfWork unitOfWork, IMapper mapper)
         {
             _transferService = transferService;
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -30,10 +35,33 @@ namespace QLKHO_PhanVanHoang.Controllers
                 @params.PageNumber,
                 @params.PageSize,
                 v => string.IsNullOrEmpty(@params.SearchTerm) || v.Code.Contains(@params.SearchTerm),
-                null,
+                q => q.OrderByDescending(v => v.CreatedAt),
                 "FromWarehouse,ToWarehouse");
             
-            return Ok(ApiResponse<PagedResult<TransferVoucher>>.SuccessResult(result));
+            var dtos = _mapper.Map<IEnumerable<TransferVoucherDto>>(result.Items).ToList();
+
+            // Resolve FullNames
+            var usernames = dtos.Select(d => d.CreatedBy).Distinct().ToList();
+            var userMap = await _unitOfWork.Context.SystemUsers
+                .Where(u => usernames.Contains(u.Username))
+                .ToDictionaryAsync(u => u.Username, u => u.FullName);
+
+            foreach (var dto in dtos)
+            {
+                if (userMap.TryGetValue(dto.CreatedBy, out var fullName))
+                {
+                    dto.CreatedByName = fullName;
+                }
+            }
+
+            return Ok(ApiResponse<PagedResult<TransferVoucherDto>>.SuccessResult(new PagedResult<TransferVoucherDto>
+            {
+                Items = dtos,
+                PageNumber = result.PageNumber,
+                PageSize = result.PageSize,
+                TotalCount = result.TotalCount,
+                TotalPages = result.TotalPages
+            }));
         }
 
         [HttpGet("{id}")]
@@ -42,7 +70,14 @@ namespace QLKHO_PhanVanHoang.Controllers
             var result = await _unitOfWork.TransferVouchers.GetPagedAsync(1, 1, v => v.Id == id, null, "FromWarehouse,ToWarehouse,Details.Product");
             var item = result.Items.FirstOrDefault();
             if (item == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy phiếu chuyển."));
-            return Ok(ApiResponse<TransferVoucher>.SuccessResult(item));
+            
+            var dto = _mapper.Map<TransferVoucherDto>(item);
+
+            // Resolve FullName
+            var user = await _unitOfWork.Context.SystemUsers.FirstOrDefaultAsync(u => u.Username == dto.CreatedBy);
+            if (user != null) dto.CreatedByName = user.FullName;
+
+            return Ok(ApiResponse<TransferVoucherDto>.SuccessResult(dto));
         }
 
         [Authorize(Roles = "Admin,WarehouseManager,Employee")]
@@ -55,10 +90,17 @@ namespace QLKHO_PhanVanHoang.Controllers
 
         [Authorize(Roles = "Admin,WarehouseManager")]
         [HttpPost("approve/{id}")]
-        public async Task<IActionResult> ApproveTransfer(int id)
+        public async Task<IActionResult> Approve(int id)
         {
-            await _transferService.ApproveTransferVoucherAsync(id);
-            return Ok(ApiResponse<object>.SuccessResult(null, "Transfer approved and inventory updated"));
+            try
+            {
+                await _transferService.ApproveTransferVoucherAsync(id);
+                return Ok(ApiResponse<object>.SuccessResult(null, "Transfer voucher approved and stock updated successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse<object>.FailureResult($"Lỗi khi duyệt phiếu chuyển: {ex.InnerException?.Message ?? ex.Message}"));
+            }
         }
 
         [HttpDelete("{id}")]

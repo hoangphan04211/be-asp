@@ -234,5 +234,47 @@ namespace QLKHO_PhanVanHoang.Services
             await _unitOfWork.CompleteAsync();
             return (successCount, errors);
         }
+
+        public async Task<byte[]> GetInventoryTemplateAsync()
+        {
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Mẫu Nhập Tồn Kho");
+
+            // Header columns
+            worksheet.Cell(1, 1).Value = "Mã SKU";
+            worksheet.Cell(1, 2).Value = "Số lượng";
+            worksheet.Cell(1, 3).Value = "ID Kho";
+            worksheet.Cell(1, 4).Value = "Số Lô (Lot)";
+            worksheet.Cell(1, 5).Value = "Vị trí (Location)";
+
+            // Style Header
+            var headerRange = worksheet.Range("A1:E1");
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.AirForceBlue;
+            headerRange.Style.Font.FontColor = XLColor.White;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+
+            // Example data (row 2)
+            worksheet.Cell(2, 1).Value = "SP001";
+            worksheet.Cell(2, 2).Value = 100;
+            worksheet.Cell(2, 3).Value = 1;
+            worksheet.Cell(2, 4).Value = "LOT-2024-001";
+            worksheet.Cell(2, 5).Value = "A-01-01";
+
+            // Add some comments/instructions
+            worksheet.Cell(4, 1).Value = "HƯỚNG DẪN NHẬP LIỆU:";
+            worksheet.Cell(4, 1).Style.Font.Bold = true;
+            worksheet.Cell(5, 1).Value = "1. Mã SKU: Phải khớp chính xác với mã trong danh mục sản phẩm.";
+            worksheet.Cell(6, 1).Value = "2. Số lượng: Phải là số dương (ví dụ: 10, 20.5).";
+            worksheet.Cell(7, 1).Value = "3. ID Kho: Lấy ID từ danh mục kho (thường là 1, 2, 3...).";
+            worksheet.Cell(8, 1).Value = "4. Số Lô: Có thể để trống nếu sản phẩm không quản lý theo lô.";
+
+            worksheet.Columns().AdjustToContents();
+            
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            return stream.ToArray();
+        }
     }
 }

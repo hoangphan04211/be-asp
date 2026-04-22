@@ -11,5 +11,6 @@ namespace QLKHO_PhanVanHoang.Services
         Task<byte[]> ExportInventoryReportAsync();
         Task<(int SuccessCount, List<string> Errors)> ImportProductsAsync(IFormFile file);
         Task<(int SuccessCount, List<string> Errors)> ImportInventoryAsync(IFormFile file);
+        Task<byte[]> GetInventoryTemplateAsync();
     }
 }

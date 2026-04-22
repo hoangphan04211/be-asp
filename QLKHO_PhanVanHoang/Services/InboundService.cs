@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using QLKHO_PhanVanHoang.Repositories;
 
 namespace QLKHO_PhanVanHoang.Services
@@ -20,36 +21,42 @@ namespace QLKHO_PhanVanHoang.Services
 
         public async Task ApproveReceivingVoucherAsync(int voucherId)
         {
-            await _unitOfWork.BeginTransactionAsync();
-            try
+            var strategy = _unitOfWork.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
             {
-                var voucher = await _unitOfWork.ReceivingVouchers.GetByIdAsync(voucherId);
-                if (voucher == null) throw new Exception("Không tìm thấy phiếu nhập");
-                if (voucher.Status != "Draft") throw new Exception("Chỉ duyệt được phiếu nháp (Draft)");
-
-                var details = await _unitOfWork.ReceivingVoucherDetails.FindAsync(d => d.ReceivingVoucherId == voucherId);
-                if (!details.Any()) throw new Exception("Phiếu nhập không có chi tiết sản phẩm");
-
-                foreach (var detail in details)
+                await _unitOfWork.BeginTransactionAsync();
+                try
                 {
-                     decimal cost = detail.UnitPrice ?? 0;
-                     await _inventoryService.IncreaseInventoryAsync(detail.ProductId, voucher.WarehouseId, detail.LotNumber, detail.Quantity, cost, voucher.Code);
+                    var voucher = await _unitOfWork.ReceivingVouchers.GetByIdAsync(voucherId);
+                    if (voucher == null) throw new Exception("Không tìm thấy phiếu nhập");
+                    if (voucher.Status != "Draft") throw new Exception("Chỉ duyệt được phiếu nháp (Draft)");
+
+                    var details = await _unitOfWork.ReceivingVoucherDetails.FindAsync(d => d.ReceivingVoucherId == voucherId);
+                    if (!details.Any()) throw new Exception("Phiếu nhập không có chi tiết sản phẩm");
+
+                    foreach (var detail in details)
+                    {
+                         decimal cost = detail.UnitPrice ?? 0;
+                         await _inventoryService.IncreaseInventoryAsync(detail.ProductId, voucher.WarehouseId, detail.LotNumber, detail.Quantity, cost, voucher.Code);
+                    }
+
+                    voucher.Status = "Completed";
+                    _unitOfWork.ReceivingVouchers.Update(voucher);
+
+                    await _unitOfWork.CommitTransactionAsync();
+                    
+                    // Gửi thông báo SignalR thành công
+                    try {
+                        await _notificationService.SendNotificationToAllAsync("✅ Nhập kho thành công", 
+                            $"Phiếu nhập {voucher.Code} đã được duyệt bởi {voucher.UpdatedBy}.");
+                    } catch {}
                 }
-
-                voucher.Status = "Completed";
-                _unitOfWork.ReceivingVouchers.Update(voucher);
-
-                await _unitOfWork.CommitTransactionAsync();
-                
-                // Gửi thông báo SignalR thành công
-                await _notificationService.SendNotificationToAllAsync("✅ Nhập kho thành công", 
-                    $"Phiếu nhập {voucher.Code} đã được duyệt và cập nhật tồn kho.");
-            }
-            catch
-            {
-                await _unitOfWork.RollbackTransactionAsync();
-                throw; 
-            }
+                catch
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw; 
+                }
+            });
         }
     }
 }

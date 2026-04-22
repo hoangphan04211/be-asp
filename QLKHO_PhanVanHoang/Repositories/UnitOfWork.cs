@@ -63,10 +63,17 @@ namespace QLKHO_PhanVanHoang.Repositories
         public IGenericRepository<SystemUser> SystemUsers { get; private set; }
         public IGenericRepository<AuditLog> AuditLogs { get; private set; }
         public IGenericRepository<Permission> Permissions { get; private set; }
+        
+        public ApplicationDbContext Context => _context;
 
         public async Task<int> CompleteAsync()
         {
             return await _context.SaveChangesAsync();
+        }
+
+        public Microsoft.EntityFrameworkCore.Storage.IExecutionStrategy CreateExecutionStrategy()
+        {
+            return _context.Database.CreateExecutionStrategy();
         }
 
         public async Task BeginTransactionAsync()

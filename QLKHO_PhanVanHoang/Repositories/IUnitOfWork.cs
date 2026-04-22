@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using QLKHO_PhanVanHoang.Models;
+using QLKHO_PhanVanHoang.Data;
 
 namespace QLKHO_PhanVanHoang.Repositories
 {
@@ -30,9 +31,12 @@ namespace QLKHO_PhanVanHoang.Repositories
         IGenericRepository<AuditLog> AuditLogs { get; }
         IGenericRepository<Permission> Permissions { get; }
 
+        ApplicationDbContext Context { get; }
+
         Task<int> CompleteAsync();
         
         // Transaction management
+        Microsoft.EntityFrameworkCore.Storage.IExecutionStrategy CreateExecutionStrategy();
         Task BeginTransactionAsync();
         Task CommitTransactionAsync();
         Task RollbackTransactionAsync();

@@ -28,6 +28,8 @@ namespace QLKHO_PhanVanHoang.DTOs
         public DateTime CountingDate { get; set; }
         public int WarehouseId { get; set; }
         public string WarehouseName { get; set; } = string.Empty;
+        public string CreatedBy { get; set; } = string.Empty;
+        public string CreatedByName { get; set; } = string.Empty;
         public List<CountingSheetDetailDto> Details { get; set; } = new List<CountingSheetDetailDto>();
     }
 

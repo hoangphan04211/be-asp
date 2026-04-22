@@ -174,12 +174,40 @@ namespace QLKHO_PhanVanHoang.Data
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            var currentUser = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Name)?.Value ?? "system";
-            var auditEntries = OnBeforeSaveChanges(currentUser);
+            var username = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Name)?.Value ?? "system";
             
+            // 1. Capture changes
+            var auditEntries = OnBeforeSaveChanges(username);
+            
+            // 2. Save the main data (ReceivingVoucher, Details, etc.)
             var result = await base.SaveChangesAsync(cancellationToken);
             
-            await OnAfterSaveChanges(auditEntries);
+            // 3. Safe Audit Log saving
+            try
+            {
+                if (auditEntries.Any())
+                {
+                    foreach (var auditEntry in auditEntries)
+                    {
+                        // Update KeyValues with generated IDs after the first save
+                        foreach (var prop in auditEntry.Entry.Properties)
+                        {
+                            if (prop.Metadata.IsPrimaryKey())
+                            {
+                                auditEntry.KeyValues[prop.Metadata.Name] = prop.CurrentValue!;
+                            }
+                        }
+                        AuditLogs.Add(auditEntry.ToAudit());
+                    }
+                    await base.SaveChangesAsync(cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Nếu lỗi Audit Log, vẫn cho phép hoàn thành tác vụ chính
+                Console.WriteLine($"Audit Log Error: {ex.Message}");
+            }
+
             return result;
         }
 
@@ -187,7 +215,7 @@ namespace QLKHO_PhanVanHoang.Data
         {
             ChangeTracker.DetectChanges();
             var auditEntries = new List<AuditEntry>();
-
+            
             foreach (var entry in ChangeTracker.Entries<BaseEntity>())
             {
                 if (entry.State == EntityState.Detached || entry.State == EntityState.Unchanged)
@@ -198,7 +226,6 @@ namespace QLKHO_PhanVanHoang.Data
                     EntityName = entry.Entity.GetType().Name,
                     ChangedBy = userId
                 };
-                auditEntries.Add(auditEntry);
 
                 foreach (var property in entry.Properties)
                 {
@@ -219,21 +246,16 @@ namespace QLKHO_PhanVanHoang.Data
                             break;
 
                         case EntityState.Deleted:
-                            if (entry.Entity.IsDeleted)
+                            auditEntry.AuditType = "Delete";
+                            if (property.OriginalValue != null) auditEntry.OldValues[propertyName] = property.OriginalValue;
+                            // Soft Delete logic
+                            if (!entry.Entity.IsDeleted)
                             {
-                                // If already soft-deleted, allow hard delete
-                                auditEntry.AuditType = "HardDelete";
-                            }
-                            else
-                            {
-                                // Convert to Soft Delete
                                 entry.State = EntityState.Modified;
                                 entry.Entity.IsDeleted = true;
                                 entry.Entity.UpdatedAt = DateTime.Now;
                                 entry.Entity.UpdatedBy = userId;
-                                auditEntry.AuditType = "Delete";
                             }
-                            if (property.OriginalValue != null) auditEntry.OldValues[propertyName] = property.OriginalValue;
                             break;
 
                         case EntityState.Modified:
@@ -248,6 +270,8 @@ namespace QLKHO_PhanVanHoang.Data
                             break;
                     }
                 }
+                
+                auditEntries.Add(auditEntry);
             }
             return auditEntries;
         }

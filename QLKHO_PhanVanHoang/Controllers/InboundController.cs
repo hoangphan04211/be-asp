@@ -9,6 +9,8 @@ using QLKHO_PhanVanHoang.Services;
 using QLKHO_PhanVanHoang.DTOs;
 using QLKHO_PhanVanHoang.Helpers;
 using System.Collections.Generic;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace QLKHO_PhanVanHoang.Controllers
 {
@@ -40,7 +42,21 @@ namespace QLKHO_PhanVanHoang.Controllers
                 v => v.OrderByDescending(x => x.ReceivingDate),
                 "Warehouse,Supplier,Details");
 
-            var dtos = _mapper.Map<IEnumerable<ReceivingVoucherDto>>(result.Items);
+            var dtos = _mapper.Map<IEnumerable<ReceivingVoucherDto>>(result.Items).ToList();
+            
+            // Resolve FullNames for CreatedBy
+            var usernames = dtos.Select(d => d.CreatedBy).Distinct().ToList();
+            var userMap = await _unitOfWork.Context.SystemUsers
+                .Where(u => usernames.Contains(u.Username))
+                .ToDictionaryAsync(u => u.Username, u => u.FullName);
+
+            foreach (var dto in dtos)
+            {
+                if (userMap.TryGetValue(dto.CreatedBy, out var fullName))
+                {
+                    dto.CreatedByName = fullName;
+                }
+            }
             
             return Ok(ApiResponse<PagedResult<ReceivingVoucherDto>>.SuccessResult(new PagedResult<ReceivingVoucherDto>
             {
@@ -60,6 +76,11 @@ namespace QLKHO_PhanVanHoang.Controllers
             if (item == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy phiếu nhập."));
 
             var dto = _mapper.Map<ReceivingVoucherDto>(item);
+            
+            // Resolve FullName
+            var user = await _unitOfWork.Context.SystemUsers.FirstOrDefaultAsync(u => u.Username == dto.CreatedBy);
+            if (user != null) dto.CreatedByName = user.FullName;
+
             return Ok(ApiResponse<ReceivingVoucherDto>.SuccessResult(dto));
         }
 
@@ -67,26 +88,45 @@ namespace QLKHO_PhanVanHoang.Controllers
         [HttpPost("draft")]
         public async Task<IActionResult> CreateDraftVoucher(CreateReceivingVoucherDto dto)
         {
-            var voucher = _mapper.Map<ReceivingVoucher>(dto);
-            voucher.Status = "Draft";
-
-            if (string.IsNullOrEmpty(voucher.Code))
+            try
             {
-                voucher.Code = await _codeGenerator.GenerateReceivingCodeAsync();
+                var voucher = _mapper.Map<ReceivingVoucher>(dto);
+                voucher.Status = "Draft";
+
+                if (voucher.ReceivingDate == default)
+                {
+                    voucher.ReceivingDate = DateTime.Now;
+                }
+
+                if (string.IsNullOrEmpty(voucher.Code))
+                {
+                    voucher.Code = await _codeGenerator.GenerateReceivingCodeAsync();
+                }
+                
+                await _unitOfWork.ReceivingVouchers.AddAsync(voucher);
+                await _unitOfWork.CompleteAsync(); 
+                
+                return Ok(ApiResponse<object>.SuccessResult(new { VoucherId = voucher.Id, Code = voucher.Code }, "Created draft receiving voucher successfully"));
             }
-            
-            await _unitOfWork.ReceivingVouchers.AddAsync(voucher);
-            await _unitOfWork.CompleteAsync(); 
-            
-            return Ok(ApiResponse<object>.SuccessResult(new { VoucherId = voucher.Id, Code = voucher.Code }, "Created draft receiving voucher successfully"));
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse<object>.FailureResult($"Lỗi khi lưu phiếu nháp: {ex.InnerException?.Message ?? ex.Message}"));
+            }
         }
 
         [Authorize(Roles = "Admin,WarehouseManager")]
         [HttpPost("approve/{id}")]
         public async Task<IActionResult> ApproveVoucher(int id)
         {
-            await _inboundService.ApproveReceivingVoucherAsync(id);
-            return Ok(ApiResponse<object>.SuccessResult(null, "Voucher approved successfully. Inventory has been updated."));
+            try
+            {
+                await _inboundService.ApproveReceivingVoucherAsync(id);
+                return Ok(ApiResponse<object>.SuccessResult(null, "Voucher approved successfully. Inventory has been updated."));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse<object>.FailureResult($"Lỗi khi duyệt phiếu nhập: {ex.InnerException?.Message ?? ex.Message}"));
+            }
         }
 
         [HttpDelete("{id}")]

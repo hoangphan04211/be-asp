@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -40,7 +42,21 @@ namespace QLKHO_PhanVanHoang.Controllers
                 null,
                 "Warehouse");
 
-            var dtos = _mapper.Map<IEnumerable<CountingSheetDto>>(result.Items);
+            var dtos = _mapper.Map<IEnumerable<CountingSheetDto>>(result.Items).ToList();
+
+            // Resolve FullNames
+            var usernames = dtos.Select(d => d.CreatedBy).Distinct().ToList();
+            var userMap = await _unitOfWork.Context.SystemUsers
+                .Where(u => usernames.Contains(u.Username))
+                .ToDictionaryAsync(u => u.Username, u => u.FullName);
+
+            foreach (var dto in dtos)
+            {
+                if (userMap.TryGetValue(dto.CreatedBy, out var fullName))
+                {
+                    dto.CreatedByName = fullName;
+                }
+            }
 
             return Ok(ApiResponse<PagedResult<CountingSheetDto>>.SuccessResult(new PagedResult<CountingSheetDto>
             {
@@ -58,7 +74,14 @@ namespace QLKHO_PhanVanHoang.Controllers
             var result = await _unitOfWork.CountingSheets.GetPagedAsync(1, 1, s => s.Id == id, null, "Warehouse,Details.Product");
             var item = result.Items.FirstOrDefault();
             if (item == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy phiếu kiểm."));
-            return Ok(ApiResponse<CountingSheet>.SuccessResult(item));
+            
+            var dto = _mapper.Map<CountingSheetDto>(item);
+            
+            // Resolve FullName
+            var user = await _unitOfWork.Context.SystemUsers.FirstOrDefaultAsync(u => u.Username == dto.CreatedBy);
+            if (user != null) dto.CreatedByName = user.FullName;
+
+            return Ok(ApiResponse<CountingSheetDto>.SuccessResult(dto));
         }
 
         [Authorize(Roles = "Admin,WarehouseManager,Employee")]
@@ -67,6 +90,11 @@ namespace QLKHO_PhanVanHoang.Controllers
         {
             var sheet = _mapper.Map<CountingSheet>(dto);
             sheet.Status = "Draft";
+
+            if (sheet.CountingDate == default)
+            {
+                sheet.CountingDate = DateTime.Now;
+            }
 
             if (string.IsNullOrEmpty(sheet.Code))
             {
@@ -83,8 +111,15 @@ namespace QLKHO_PhanVanHoang.Controllers
         [HttpPost("approve/{id}")]
         public async Task<IActionResult> Approve(int id)
         {
-            await _countingService.ApproveCountingSheetAsync(id);
-            return Ok(ApiResponse<object>.SuccessResult(null, "Counting sheet approved and inventory reconciled"));
+            try
+            {
+                await _countingService.ApproveCountingSheetAsync(id);
+                return Ok(ApiResponse<object>.SuccessResult(null, "Counting sheet approved and inventory reconciled"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse<object>.FailureResult($"Lỗi khi duyệt phiếu kiểm kê: {ex.InnerException?.Message ?? ex.Message}"));
+            }
         }
 
         [HttpDelete("{id}")]

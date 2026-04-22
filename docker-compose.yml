@@ -1,33 +1,44 @@
 version: '3.8'
 
 services:
+  # 1. Database: Thay SQL Server bằng MySQL 8.0
   database:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mysql:8.0
+    container_name: wms_mysql_db
+    restart: always
     environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=YourStrong@Password123
+      MYSQL_ROOT_PASSWORD: YourStrongPassword123
+      MYSQL_DATABASE: WarehouseDb
     ports:
-      - "1433:1433"
+      - "3306:3306"
     volumes:
-      - mssql_data:/var/opt/mssql
+      - mysql_data:/var/lib/mysql
 
+  # 2. Backend: Cấu hình Connection String cho MySQL
   api:
     build:
       context: .
       dockerfile: QLKHO_PhanVanHoang/Dockerfile
+    container_name: wms_backend_api
     environment:
-      - ConnectionStrings__DefaultConnection=Server=database;Database=WarehouseDb;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=True;
+      - ConnectionStrings__DefaultConnection=Server=database;Port=3306;Database=WarehouseDb;Uid=root;Pwd=YourStrongPassword123;
       - Jwt__Key=ThisIsALongSecurityKeyForJWTSigning12345
       - Jwt__Issuer=WMS_Enterprise
       - Jwt__Audience=WMS_Client
+      # Thêm cấu hình Cloudinary nếu bạn muốn test upload ảnh ở local
+      - CloudinarySettings__CloudName=your_cloud_name
+      - CloudinarySettings__ApiKey=your_api_key
+      - CloudinarySettings__ApiSecret=your_api_secret
     ports:
-      - "5000:80"
+      - "5000:8080" # ASP.NET 8 thường chạy port 8080 trong container
     depends_on:
       - database
 
+  # 3. Frontend: Cập nhật đường dẫn thư mục web_asp
   frontend:
     build:
-      context: ./frontend-wms
+      context: ../web_asp  # Trỏ ra ngoài vì docker-compose nằm trong be-asp
+    container_name: wms_frontend_react
     environment:
       - VITE_API_URL=http://localhost:5000/api
     ports:
@@ -36,4 +47,4 @@ services:
       - api
 
 volumes:
-  mssql_data:
+  mysql_data:

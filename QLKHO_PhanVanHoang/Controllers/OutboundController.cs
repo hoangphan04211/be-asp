@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -38,9 +40,23 @@ namespace QLKHO_PhanVanHoang.Controllers
                 @params.PageSize,
                 v => string.IsNullOrEmpty(@params.SearchTerm) || v.Code.Contains(@params.SearchTerm),
                 null,
-                "Warehouse,Customer");
+                "Warehouse,Customer,Details");
 
-            var dtos = _mapper.Map<IEnumerable<DeliveryVoucherDto>>(result.Items);
+            var dtos = _mapper.Map<IEnumerable<DeliveryVoucherDto>>(result.Items).ToList();
+
+            // Resolve FullNames
+            var usernames = dtos.Select(d => d.CreatedBy).Distinct().ToList();
+            var userMap = await _unitOfWork.Context.SystemUsers
+                .Where(u => usernames.Contains(u.Username))
+                .ToDictionaryAsync(u => u.Username, u => u.FullName);
+
+            foreach (var dto in dtos)
+            {
+                if (userMap.TryGetValue(dto.CreatedBy, out var fullName))
+                {
+                    dto.CreatedByName = fullName;
+                }
+            }
 
             return Ok(ApiResponse<PagedResult<DeliveryVoucherDto>>.SuccessResult(new PagedResult<DeliveryVoucherDto>
             {
@@ -60,6 +76,11 @@ namespace QLKHO_PhanVanHoang.Controllers
             if (item == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy phiếu xuất."));
             
             var dto = _mapper.Map<DeliveryVoucherDto>(item);
+            
+            // Resolve FullName
+            var user = await _unitOfWork.Context.SystemUsers.FirstOrDefaultAsync(u => u.Username == dto.CreatedBy);
+            if (user != null) dto.CreatedByName = user.FullName;
+
             return Ok(ApiResponse<DeliveryVoucherDto>.SuccessResult(dto));
         }
 
@@ -67,26 +88,45 @@ namespace QLKHO_PhanVanHoang.Controllers
         [HttpPost("draft")]
         public async Task<IActionResult> CreateDraft(CreateDeliveryVoucherDto dto)
         {
-            var voucher = _mapper.Map<DeliveryVoucher>(dto);
-            voucher.Status = "Draft";
-
-            if (string.IsNullOrEmpty(voucher.Code))
+            try
             {
-                voucher.Code = await _codeGenerator.GenerateDeliveryCodeAsync();
+                var voucher = _mapper.Map<DeliveryVoucher>(dto);
+                voucher.Status = "Draft";
+
+                if (voucher.DeliveryDate == default)
+                {
+                    voucher.DeliveryDate = DateTime.Now;
+                }
+
+                if (string.IsNullOrEmpty(voucher.Code))
+                {
+                    voucher.Code = await _codeGenerator.GenerateDeliveryCodeAsync();
+                }
+
+                await _unitOfWork.DeliveryVouchers.AddAsync(voucher);
+                await _unitOfWork.CompleteAsync();
+
+                return Ok(ApiResponse<object>.SuccessResult(new { VoucherId = voucher.Id, Code = voucher.Code }, "Created draft delivery voucher successfully"));
             }
-
-            await _unitOfWork.DeliveryVouchers.AddAsync(voucher);
-            await _unitOfWork.CompleteAsync();
-
-            return Ok(ApiResponse<object>.SuccessResult(new { VoucherId = voucher.Id, Code = voucher.Code }, "Created draft delivery voucher successfully"));
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse<object>.FailureResult($"Lỗi khi lưu phiếu nháp: {ex.InnerException?.Message ?? ex.Message}"));
+            }
         }
 
         [Authorize(Roles = "Admin,WarehouseManager")]
         [HttpPost("approve/{id}")]
         public async Task<IActionResult> Approve(int id)
         {
-            await _outboundService.ApproveDeliveryVoucherAsync(id);
-            return Ok(ApiResponse<object>.SuccessResult(null, "Delivery voucher approved and stock updated"));
+            try
+            {
+                await _outboundService.ApproveDeliveryVoucherAsync(id);
+                return Ok(ApiResponse<object>.SuccessResult(null, "Delivery voucher approved and stock updated"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse<object>.FailureResult($"Lỗi khi duyệt phiếu xuất: {ex.InnerException?.Message ?? ex.Message}"));
+            }
         }
 
         [HttpDelete("{id}")]

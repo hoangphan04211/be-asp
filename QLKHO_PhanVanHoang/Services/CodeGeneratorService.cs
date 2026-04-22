@@ -68,16 +68,16 @@ namespace QLKHO_PhanVanHoang.Services
             switch (prefix)
             {
                 case "PN": 
-                    latestCode = (await _context.ReceivingVouchers.Where(v => v.Code.StartsWith(prefixWithDate)).OrderByDescending(v => v.Code).FirstOrDefaultAsync())?.Code;
+                    latestCode = (await _context.ReceivingVouchers.IgnoreQueryFilters().Where(v => v.Code.StartsWith(prefixWithDate)).OrderByDescending(v => v.Code).FirstOrDefaultAsync())?.Code;
                     break;
                 case "PX":
-                    latestCode = (await _context.DeliveryVouchers.Where(v => v.Code.StartsWith(prefixWithDate)).OrderByDescending(v => v.Code).FirstOrDefaultAsync())?.Code;
+                    latestCode = (await _context.DeliveryVouchers.IgnoreQueryFilters().Where(v => v.Code.StartsWith(prefixWithDate)).OrderByDescending(v => v.Code).FirstOrDefaultAsync())?.Code;
                     break;
                 case "DC":
-                    latestCode = (await _context.TransferVouchers.Where(v => v.Code.StartsWith(prefixWithDate)).OrderByDescending(v => v.Code).FirstOrDefaultAsync())?.Code;
+                    latestCode = (await _context.TransferVouchers.IgnoreQueryFilters().Where(v => v.Code.StartsWith(prefixWithDate)).OrderByDescending(v => v.Code).FirstOrDefaultAsync())?.Code;
                     break;
                 case "KK":
-                    latestCode = (await _context.CountingSheets.Where(v => v.Code.StartsWith(prefixWithDate)).OrderByDescending(v => v.Code).FirstOrDefaultAsync())?.Code;
+                    latestCode = (await _context.CountingSheets.IgnoreQueryFilters().Where(v => v.Code.StartsWith(prefixWithDate)).OrderByDescending(v => v.Code).FirstOrDefaultAsync())?.Code;
                     break;
             }
 

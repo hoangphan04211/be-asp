@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using QLKHO_PhanVanHoang.Models;
 using QLKHO_PhanVanHoang.Repositories;
 using QLKHO_PhanVanHoang.DTOs;
@@ -12,12 +13,14 @@ namespace QLKHO_PhanVanHoang.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IInventoryService _inventoryService;
         private readonly ICodeGeneratorService _codeGenerator;
+        private readonly INotificationService _notificationService;
 
-        public TransferService(IUnitOfWork unitOfWork, IInventoryService inventoryService, ICodeGeneratorService codeGenerator)
+        public TransferService(IUnitOfWork unitOfWork, IInventoryService inventoryService, ICodeGeneratorService codeGenerator, INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _inventoryService = inventoryService;
             _codeGenerator = codeGenerator;
+            _notificationService = notificationService;
         }
         public async Task CreateTransferVoucherAsync(CreateTransferDto dto)
         {
@@ -52,49 +55,59 @@ namespace QLKHO_PhanVanHoang.Services
 
         public async Task ApproveTransferVoucherAsync(int voucherId)
         {
-            var voucherList = await _unitOfWork.TransferVouchers.GetPagedAsync(1, 1, v => v.Id == voucherId, null, "Details");
-            var voucher = voucherList.Items.FirstOrDefault();
-
-            if (voucher == null) throw new Exception("Không tìm thấy phiếu chuyển kho.");
-            if (voucher.Status != "Draft") throw new Exception("Chỉ có thể phê duyệt phiếu ở trạng thái Nháp.");
-
-            await _unitOfWork.BeginTransactionAsync();
-            try
+            var strategy = _unitOfWork.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
             {
-                foreach (var detail in voucher.Details)
+                var voucherList = await _unitOfWork.TransferVouchers.GetPagedAsync(1, 1, v => v.Id == voucherId, null, "Details");
+                var voucher = voucherList.Items.FirstOrDefault();
+
+                if (voucher == null) throw new Exception("Không tìm thấy phiếu chuyển kho.");
+                if (voucher.Status != "Draft") throw new Exception("Chỉ có thể phê duyệt phiếu ở trạng thái Nháp.");
+
+                await _unitOfWork.BeginTransactionAsync();
+                try
                 {
-                    // 1. Giảm tồn tại kho gửi
-                    await _inventoryService.DecreaseInventoryAsync(
-                        detail.ProductId, 
-                        voucher.FromWarehouseId, 
-                        detail.LotNumber, 
-                        detail.Quantity, 
-                        voucher.Code);
+                    foreach (var detail in voucher.Details)
+                    {
+                        // 1. Giảm tồn tại kho gửi
+                        await _inventoryService.DecreaseInventoryAsync(
+                            detail.ProductId, 
+                            voucher.FromWarehouseId, 
+                            detail.LotNumber, 
+                            detail.Quantity, 
+                            voucher.Code);
 
-                    // 2. Lấy thông tin sản phẩm để lấy giá vốn hiện tại (cho kho nhận)
-                    var product = await _unitOfWork.Products.GetByIdAsync(detail.ProductId);
-                    decimal costPrice = product?.CostPrice ?? 0;
+                        // 2. Lấy thông tin sản phẩm để lấy giá vốn hiện tại (cho kho nhận)
+                        var product = await _unitOfWork.Products.GetByIdAsync(detail.ProductId);
+                        decimal costPrice = product?.CostPrice ?? 0;
 
-                    // 3. Tăng tồn tại kho nhận
-                    await _inventoryService.IncreaseInventoryAsync(
-                        detail.ProductId, 
-                        voucher.ToWarehouseId, 
-                        detail.LotNumber, 
-                        detail.Quantity, 
-                        costPrice, 
-                        voucher.Code);
+                        // 3. Tăng tồn tại kho nhận
+                        await _inventoryService.IncreaseInventoryAsync(
+                            detail.ProductId, 
+                            voucher.ToWarehouseId, 
+                            detail.LotNumber, 
+                            detail.Quantity, 
+                            costPrice, 
+                            voucher.Code);
+                    }
+
+                    voucher.Status = "Completed";
+                    _unitOfWork.TransferVouchers.Update(voucher);
+
+                    await _unitOfWork.CommitTransactionAsync();
+
+                    // Gửi thông báo SignalR
+                    try {
+                        await _notificationService.SendNotificationToAllAsync("🔄 Điều chuyển thành công", 
+                            $"Phiếu điều chuyển {voucher.Code} đã được duyệt bởi {voucher.UpdatedBy}.");
+                    } catch {}
                 }
-
-                voucher.Status = "Completed";
-                _unitOfWork.TransferVouchers.Update(voucher);
-
-                await _unitOfWork.CommitTransactionAsync();
-            }
-            catch (Exception)
-            {
-                await _unitOfWork.RollbackTransactionAsync();
-                throw;
-            }
+                catch (Exception)
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw;
+                }
+            });
         }
     }
 }

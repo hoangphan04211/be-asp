@@ -16,7 +16,8 @@ namespace QLKHO_PhanVanHoang.Profiles
             CreateMap<ReceivingVoucher, ReceivingVoucherDto>()
                 .ForMember(dest => dest.WarehouseName, opt => opt.MapFrom(src => src.Warehouse != null ? src.Warehouse.Name : string.Empty))
                 .ForMember(dest => dest.SupplierName, opt => opt.MapFrom(src => src.Supplier != null ? src.Supplier.Name : string.Empty))
-                .ForMember(dest => dest.TotalAmount, opt => opt.MapFrom(src => src.Details.Sum(d => d.Quantity * (d.UnitPrice ?? 0))));
+                .ForMember(dest => dest.TotalAmount, opt => opt.MapFrom(src => src.Details.Sum(d => d.Quantity * (d.UnitPrice ?? 0))))
+                .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedBy));
             
             CreateMap<ReceivingVoucherDetail, ReceivingVoucherDetailDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product != null ? src.Product.Name : string.Empty))
@@ -43,7 +44,8 @@ namespace QLKHO_PhanVanHoang.Profiles
             CreateMap<DeliveryVoucher, DeliveryVoucherDto>()
                 .ForMember(dest => dest.WarehouseName, opt => opt.MapFrom(src => src.Warehouse != null ? src.Warehouse.Name : string.Empty))
                 .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer != null ? src.Customer.Name : string.Empty))
-                .ForMember(dest => dest.TotalAmount, opt => opt.MapFrom(src => src.Details.Sum(d => d.Quantity * (d.SellingPrice ?? 0))));
+                .ForMember(dest => dest.TotalAmount, opt => opt.MapFrom(src => src.Details.Sum(d => d.Quantity * (d.SellingPrice ?? 0))))
+                .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedBy));
             
             CreateMap<DeliveryVoucherDetail, DeliveryVoucherDetailDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product != null ? src.Product.Name : string.Empty))
@@ -54,7 +56,8 @@ namespace QLKHO_PhanVanHoang.Profiles
 
             // Counting mappings
             CreateMap<CountingSheet, CountingSheetDto>()
-                .ForMember(dest => dest.WarehouseName, opt => opt.MapFrom(src => src.Warehouse != null ? src.Warehouse.Name : string.Empty));
+                .ForMember(dest => dest.WarehouseName, opt => opt.MapFrom(src => src.Warehouse != null ? src.Warehouse.Name : string.Empty))
+                .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedBy));
             
             CreateMap<CountingSheetDetail, CountingSheetDetailDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product != null ? src.Product.Name : string.Empty))
@@ -76,6 +79,16 @@ namespace QLKHO_PhanVanHoang.Profiles
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product != null ? src.Product.Name : string.Empty))
                 .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product != null ? src.Product.SkuCode : string.Empty))
                 .ForMember(dest => dest.WarehouseName, opt => opt.MapFrom(src => src.Warehouse != null ? src.Warehouse.Name : string.Empty));
+
+            // Transfer mappings
+            CreateMap<TransferVoucher, TransferVoucherDto>()
+                .ForMember(dest => dest.FromWarehouseName, opt => opt.MapFrom(src => src.FromWarehouse != null ? src.FromWarehouse.Name : string.Empty))
+                .ForMember(dest => dest.ToWarehouseName, opt => opt.MapFrom(src => src.ToWarehouse != null ? src.ToWarehouse.Name : string.Empty))
+                .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedBy));
+
+            CreateMap<TransferVoucherDetail, TransferVoucherDetailDto>()
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product != null ? src.Product.Name : string.Empty))
+                .ForMember(dest => dest.ProductCode, opt => opt.MapFrom(src => src.Product != null ? src.Product.SkuCode : string.Empty));
         }
     }
 }

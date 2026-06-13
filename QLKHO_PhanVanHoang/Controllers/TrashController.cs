@@ -1,9 +1,11 @@
+using QLKHO_PhanVanHoang.Constants;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QLKHO_PhanVanHoang.Attributes;
 using QLKHO_PhanVanHoang.DTOs;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Models;
@@ -11,7 +13,8 @@ using QLKHO_PhanVanHoang.Repositories;
 
 namespace QLKHO_PhanVanHoang.Controllers
 {
-    [Authorize(Roles = "Admin,WarehouseManager")]
+    [Authorize]
+    [HasPermission("SYSTEM_TRASH")]
     [ApiController]
     [Route("api/[controller]")]
     public class TrashController : ControllerBase
@@ -151,7 +154,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpDelete("hard-delete/{type}/{id}")]
-        [Authorize(Roles = "Admin")] // Chỉ Admin mới có quyền xóa vĩnh viễn
+        [Authorize(Roles = AppRoles.Admin)] // Chỉ Admin mới có quyền xóa vĩnh viễn
         public async Task<IActionResult> DeletePermanently(string type, int id)
         {
             try
@@ -200,3 +203,5 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
     }
 }
+
+

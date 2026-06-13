@@ -34,7 +34,7 @@ namespace QLKHO_PhanVanHoang.Tests
             var inventory = new List<Inventory>();
 
             _mockUow.Setup(u => u.Products.GetByIdAsync(productId)).ReturnsAsync(product);
-            _mockUow.Setup(u => u.Inventories.FindAsync(It.IsAny<Expression<Func<Inventory, bool>>>()))
+            _mockUow.Setup(u => u.Inventories.FindAsync(It.IsAny<Expression<Func<Inventory, bool>>>(), It.IsAny<string>()))
                     .ReturnsAsync(inventory);
             _mockUow.Setup(u => u.StockCards.AddAsync(It.IsAny<StockCard>())).Returns(Task.CompletedTask);
 
@@ -57,7 +57,7 @@ namespace QLKHO_PhanVanHoang.Tests
             var inventory = new Inventory { ProductId = productId, WarehouseId = warehouseId, QuantityOnHand = 10 };
             
             _mockUow.Setup(u => u.Products.GetByIdAsync(productId)).ReturnsAsync(product);
-            _mockUow.Setup(u => u.Inventories.FindAsync(It.IsAny<Expression<Func<Inventory, bool>>>()))
+            _mockUow.Setup(u => u.Inventories.FindAsync(It.IsAny<Expression<Func<Inventory, bool>>>(), It.IsAny<string>()))
                     .ReturnsAsync(new List<Inventory> { inventory });
             _mockUow.Setup(u => u.StockCards.AddAsync(It.IsAny<StockCard>())).Returns(Task.CompletedTask);
 
@@ -76,7 +76,7 @@ namespace QLKHO_PhanVanHoang.Tests
             int warehouseId = 1;
             var inventory = new Inventory { ProductId = productId, WarehouseId = warehouseId, QuantityOnHand = 5 };
             
-            _mockUow.Setup(u => u.Inventories.FindAsync(It.IsAny<Expression<Func<Inventory, bool>>>()))
+            _mockUow.Setup(u => u.Inventories.FindAsync(It.IsAny<Expression<Func<Inventory, bool>>>(), It.IsAny<string>()))
                     .ReturnsAsync(new List<Inventory> { inventory });
 
             // Act & Assert

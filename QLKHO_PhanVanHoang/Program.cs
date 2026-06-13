@@ -137,6 +137,7 @@ namespace QLKHO_PhanVanHoang
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IFileService, CloudinaryService>();
             builder.Services.AddScoped<ICodeGeneratorService, CodeGeneratorService>();
+            builder.Services.AddScoped<IForecastingService, ForecastingService>();
 
             // Cloudinary Settings
             builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
@@ -178,6 +179,23 @@ namespace QLKHO_PhanVanHoang
                             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
                             RoleClaimType = System.Security.Claims.ClaimTypes.Role,
                             NameClaimType = System.Security.Claims.ClaimTypes.Name
+                        };
+
+                        options.Events = new JwtBearerEvents
+                        {
+                            OnTokenValidated = async context =>
+                            {
+                                var unitOfWork = context.HttpContext.RequestServices.GetRequiredService<IUnitOfWork>();
+                                var sessionIdClaim = context.Principal?.FindFirst("SessionId");
+                                if (sessionIdClaim != null && int.TryParse(sessionIdClaim.Value, out int sessionId))
+                                {
+                                    var session = await unitOfWork.UserSessions.GetByIdAsync(sessionId);
+                                    if (session == null || session.IsRevoked || session.ExpiresAt <= DateTime.UtcNow)
+                                    {
+                                        context.Fail("This session has been revoked or expired.");
+                                    }
+                                }
+                            }
                         };
                     });
             }

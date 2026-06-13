@@ -28,13 +28,20 @@ namespace QLKHO_PhanVanHoang.Models
 
         public virtual Role? Role { get; set; }
 
-        // === FOR REFRESH TOKEN ===
-        public string? RefreshToken { get; set; }
-        public DateTime? RefreshTokenExpiryTime { get; set; }
-
+        // === FOR REFRESH TOKEN (MULTI-SESSION) ===
+        public virtual ICollection<UserSession> Sessions { get; set; } = new List<UserSession>();
         // === FOR PASSWORD RESET (6-digit code) ===
         [MaxLength(6)]
         public string? ResetPasswordCode { get; set; }
         public DateTime? ResetPasswordExpiry { get; set; }
+
+        // === FOR TWO-FACTOR AUTHENTICATION (2FA) ===
+        public bool TwoFactorEnabled { get; set; } = false;
+        public string? TwoFactorSecret { get; set; }
+        [MaxLength(20)]
+        public string? TwoFactorType { get; set; } // "Email" | "App"
+        [MaxLength(6)]
+        public string? TwoFactorTempCode { get; set; }
+        public DateTime? TwoFactorTempCodeExpiry { get; set; }
     }
 }

@@ -30,6 +30,7 @@ namespace QLKHO_PhanVanHoang.Repositories
         IGenericRepository<SystemUser> SystemUsers { get; }
         IGenericRepository<AuditLog> AuditLogs { get; }
         IGenericRepository<Permission> Permissions { get; }
+        IGenericRepository<UserSession> UserSessions { get; }
 
         ApplicationDbContext Context { get; }
 

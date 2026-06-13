@@ -1,9 +1,11 @@
+using QLKHO_PhanVanHoang.Constants;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QLKHO_PhanVanHoang.Attributes;
 using QLKHO_PhanVanHoang.DTOs;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Models;
@@ -27,6 +29,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet]
+        [HasPermission("MASTER_DATA_VIEW")]
         public async Task<IActionResult> GetPaged([FromQuery] PaginationParams @params)
         {
             var result = await _unitOfWork.Categories.GetPagedAsync(
@@ -48,6 +51,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet("{id}")]
+        [HasPermission("MASTER_DATA_VIEW")]
         public async Task<IActionResult> GetById(int id)
         {
             var item = await _unitOfWork.Categories.GetByIdAsync(id);
@@ -55,7 +59,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<CategoryDto>.SuccessResult(_mapper.Map<CategoryDto>(item)));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("MASTER_DATA_EDIT")]
         [HttpPost]
         public async Task<IActionResult> Create(CreateCategoryDto dto)
         {
@@ -65,7 +69,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<CategoryDto>.SuccessResult(_mapper.Map<CategoryDto>(category), "Tạo loại hàng thành công"));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("MASTER_DATA_EDIT")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, CreateCategoryDto dto)
         {
@@ -78,7 +82,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<CategoryDto>.SuccessResult(_mapper.Map<CategoryDto>(item), "Cập nhật loại hàng thành công"));
         }
 
-        [Authorize(Roles = "Admin")]
+        [HasPermission("MASTER_DATA_EDIT")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -108,6 +112,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet]
+        [HasPermission("MASTER_DATA_VIEW")]
         public async Task<IActionResult> GetPaged([FromQuery] PaginationParams @params)
         {
             var result = await _unitOfWork.Suppliers.GetPagedAsync(
@@ -129,6 +134,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet("{id}")]
+        [HasPermission("MASTER_DATA_VIEW")]
         public async Task<IActionResult> GetById(int id)
         {
             var item = await _unitOfWork.Suppliers.GetByIdAsync(id);
@@ -136,7 +142,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<SupplierDto>.SuccessResult(_mapper.Map<SupplierDto>(item)));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("MASTER_DATA_EDIT")]
         [HttpPost]
         public async Task<IActionResult> Create(CreateSupplierDto dto)
         {
@@ -152,7 +158,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<SupplierDto>.SuccessResult(_mapper.Map<SupplierDto>(supplier), "Tạo nhà cung cấp thành công"));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("MASTER_DATA_EDIT")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, CreateSupplierDto dto)
         {
@@ -165,7 +171,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<SupplierDto>.SuccessResult(_mapper.Map<SupplierDto>(item), "Cập nhật nhà cung cấp thành công"));
         }
 
-        [Authorize(Roles = "Admin")]
+        [HasPermission("MASTER_DATA_EDIT")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -194,6 +200,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet]
+        [HasPermission("MASTER_DATA_VIEW")]
         public async Task<IActionResult> GetPaged([FromQuery] PaginationParams @params)
         {
             var result = await _unitOfWork.Customers.GetPagedAsync(
@@ -215,6 +222,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet("{id}")]
+        [HasPermission("MASTER_DATA_VIEW")]
         public async Task<IActionResult> GetById(int id)
         {
             var item = await _unitOfWork.Customers.GetByIdAsync(id);
@@ -222,7 +230,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<CustomerDto>.SuccessResult(_mapper.Map<CustomerDto>(item)));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("MASTER_DATA_EDIT")]
         [HttpPost]
         public async Task<IActionResult> Create(CreateCustomerDto dto)
         {
@@ -238,7 +246,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<CustomerDto>.SuccessResult(_mapper.Map<CustomerDto>(customer), "Tạo khách hàng thành công"));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("MASTER_DATA_EDIT")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, CreateCustomerDto dto)
         {
@@ -251,7 +259,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<CustomerDto>.SuccessResult(_mapper.Map<CustomerDto>(item), "Cập nhật khách hàng thành công"));
         }
 
-        [Authorize(Roles = "Admin")]
+        [HasPermission("MASTER_DATA_EDIT")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

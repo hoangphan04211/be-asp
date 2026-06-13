@@ -1,9 +1,11 @@
+using QLKHO_PhanVanHoang.Constants;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QLKHO_PhanVanHoang.Attributes;
 using QLKHO_PhanVanHoang.DTOs;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Models;
@@ -12,7 +14,7 @@ using QLKHO_PhanVanHoang.Services;
 
 namespace QLKHO_PhanVanHoang.Controllers
 {
-    [Authorize(Roles = "Admin,WarehouseManager,Staff")]
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class ProductsController : ControllerBase
@@ -30,7 +32,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             _codeGenerator = codeGenerator;
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("PRODUCT_EDIT")]
         [HttpPost("upload-image")]
         public async Task<IActionResult> UploadImage(IFormFile file)
         {
@@ -48,6 +50,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet]
+        [HasPermission("PRODUCT_VIEW")]
         public async Task<IActionResult> GetPaged([FromQuery] PaginationParams @params)
         {
             var result = await _unitOfWork.Products.GetPagedAsync(
@@ -70,6 +73,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet("{id}")]
+        [HasPermission("PRODUCT_VIEW")]
         public async Task<IActionResult> GetById(int id)
         {
             var product = await _unitOfWork.Products.GetPagedAsync(1, 1, p => p.Id == id, null, "Category,Inventories");
@@ -80,7 +84,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<ProductDto>.SuccessResult(_mapper.Map<ProductDto>(item)));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("PRODUCT_EDIT")]
         [HttpPost]
         public async Task<IActionResult> Create(CreateProductDto dto)
         {
@@ -96,7 +100,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<ProductDto>.SuccessResult(_mapper.Map<ProductDto>(product), "Created product successfully"));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("PRODUCT_EDIT")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, CreateProductDto dto)
         {
@@ -116,7 +120,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<ProductDto>.SuccessResult(_mapper.Map<ProductDto>(product), "Updated product successfully"));
         }
 
-        [Authorize(Roles = "Admin")]
+        [HasPermission("PRODUCT_EDIT")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -128,7 +132,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<object>.SuccessResult(null, "Product soft-deleted successfully"));
         }
 
-        [Authorize(Roles = "Admin")]
+        [HasPermission("PRODUCT_EDIT")]
         [HttpPost("restore/{id}")]
         public async Task<IActionResult> Restore(int id)
         {
@@ -143,3 +147,6 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
     }
 }
+
+
+

@@ -1,25 +1,31 @@
+using QLKHO_PhanVanHoang.Constants;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QLKHO_PhanVanHoang.Attributes;
 using QLKHO_PhanVanHoang.DTOs;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Models;
 using QLKHO_PhanVanHoang.Repositories;
+using QLKHO_PhanVanHoang.Services;
 
 namespace QLKHO_PhanVanHoang.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize]
+    [HasPermission("USER_MANAGEMENT")]
     [ApiController]
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationService _notificationService;
 
-        public UsersController(IUnitOfWork unitOfWork)
+        public UsersController(IUnitOfWork unitOfWork, INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
         }
 
         /// <summary>
@@ -118,6 +124,8 @@ namespace QLKHO_PhanVanHoang.Controllers
             var user = await _unitOfWork.SystemUsers.GetByIdAsync(id);
             if (user == null) return NotFound(ApiResponse<object>.FailureResult("Không tìm thấy người dùng."));
 
+            bool roleChanged = user.RoleId != dto.RoleId;
+
             user.FullName = dto.FullName;
             user.Email = dto.Email;
             user.RoleId = dto.RoleId;
@@ -125,6 +133,11 @@ namespace QLKHO_PhanVanHoang.Controllers
 
             _unitOfWork.SystemUsers.Update(user);
             await _unitOfWork.CompleteAsync();
+
+            if (roleChanged)
+            {
+                await _notificationService.SendPermissionsUpdatedToUserAsync(id.ToString());
+            }
 
             return Ok(ApiResponse<object>.SuccessResult(null, "Cập nhật thông tin thành công."));
         }
@@ -162,3 +175,6 @@ namespace QLKHO_PhanVanHoang.Controllers
 
     }
 }
+
+
+

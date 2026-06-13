@@ -1,8 +1,10 @@
+using QLKHO_PhanVanHoang.Constants;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using QLKHO_PhanVanHoang.Attributes;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Services;
 
@@ -20,7 +22,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             _excelService = excelService;
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [Authorize(Roles = AppRoles.AdminOrManager)]
         [HttpGet("export-inventory")]
         public async Task<IActionResult> ExportInventory()
         {
@@ -30,7 +32,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "BaoCaoTonKho.xlsx");
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [Authorize(Roles = AppRoles.AdminOrManager)]
         [HttpPost("import-products")]
         public async Task<IActionResult> ImportProducts(IFormFile file)
         {
@@ -42,7 +44,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<object>.SuccessResult(result, $"Import sản phẩm hoàn tất. Thành công: {successCount} dòng."));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [Authorize(Roles = AppRoles.AdminOrManager)]
         [HttpGet("download-template")]
         public async Task<IActionResult> DownloadTemplate()
         {
@@ -50,7 +52,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Mau_Nhap_Ton_Kho.xlsx");
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [Authorize(Roles = AppRoles.AdminOrManager)]
         [HttpPost("import-inventory")]
         public async Task<IActionResult> ImportInventory(IFormFile file)
         {
@@ -63,3 +65,5 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
     }
 }
+
+

@@ -1,5 +1,7 @@
+using QLKHO_PhanVanHoang.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QLKHO_PhanVanHoang.Attributes;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Models;
 using QLKHO_PhanVanHoang.Repositories;
@@ -22,6 +24,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet]
+        [HasPermission("USER_MANAGEMENT")]
         public async Task<IActionResult> GetAll()
         {
             var permissions = await _unitOfWork.Permissions.GetAllAsync();
@@ -60,3 +63,6 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
     }
 }
+
+
+

@@ -1,3 +1,4 @@
+using QLKHO_PhanVanHoang.Constants;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QLKHO_PhanVanHoang.Attributes;
 using QLKHO_PhanVanHoang.DTOs;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Models;
@@ -33,6 +35,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet]
+        [HasPermission("OUTBOUND_VIEW")]
         public async Task<IActionResult> GetPaged([FromQuery] PaginationParams @params)
         {
             var result = await _unitOfWork.DeliveryVouchers.GetPagedAsync(
@@ -69,6 +72,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet("{id}")]
+        [HasPermission("OUTBOUND_VIEW")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _unitOfWork.DeliveryVouchers.GetPagedAsync(1, 1, v => v.Id == id, null, "Warehouse,Customer,Details.Product");
@@ -84,7 +88,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<DeliveryVoucherDto>.SuccessResult(dto));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager,Employee")]
+        [HasPermission("OUTBOUND_CREATE")]
         [HttpPost("draft")]
         public async Task<IActionResult> CreateDraft(CreateDeliveryVoucherDto dto)
         {
@@ -114,7 +118,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("OUTBOUND_APPROVE")]
         [HttpPost("approve/{id}")]
         public async Task<IActionResult> Approve(int id)
         {
@@ -129,6 +133,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             }
         }
 
+        [HasPermission("OUTBOUND_CREATE")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -143,3 +148,5 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
     }
 }
+
+

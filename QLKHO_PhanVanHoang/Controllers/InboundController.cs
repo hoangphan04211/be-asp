@@ -1,8 +1,10 @@
+using QLKHO_PhanVanHoang.Constants;
 using System;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QLKHO_PhanVanHoang.Attributes;
 using QLKHO_PhanVanHoang.Models;
 using QLKHO_PhanVanHoang.Repositories;
 using QLKHO_PhanVanHoang.Services;
@@ -33,6 +35,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet]
+        [HasPermission("INBOUND_VIEW")]
         public async Task<IActionResult> GetPaged([FromQuery] PaginationParams @params)
         {
             var result = await _unitOfWork.ReceivingVouchers.GetPagedAsync(
@@ -69,6 +72,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet("{id}")]
+        [HasPermission("INBOUND_VIEW")]
         public async Task<IActionResult> GetById(int id)
         {
             var res = await _unitOfWork.ReceivingVouchers.GetPagedAsync(1, 1, v => v.Id == id, null, "Warehouse,Supplier,Details.Product");
@@ -84,7 +88,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<ReceivingVoucherDto>.SuccessResult(dto));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager,Employee")]
+        [HasPermission("INBOUND_CREATE")]
         [HttpPost("draft")]
         public async Task<IActionResult> CreateDraftVoucher(CreateReceivingVoucherDto dto)
         {
@@ -114,7 +118,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("INBOUND_APPROVE")]
         [HttpPost("approve/{id}")]
         public async Task<IActionResult> ApproveVoucher(int id)
         {
@@ -129,6 +133,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             }
         }
 
+        [HasPermission("INBOUND_CREATE")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -143,3 +148,5 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
     }
 }
+
+

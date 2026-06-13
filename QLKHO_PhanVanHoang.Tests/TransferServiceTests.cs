@@ -13,13 +13,17 @@ namespace QLKHO_PhanVanHoang.Tests
     {
         private readonly Mock<IUnitOfWork> _mockUow;
         private readonly Mock<IInventoryService> _mockInventoryService;
+        private readonly Mock<ICodeGeneratorService> _mockCodeGenerator;
+        private readonly Mock<INotificationService> _mockNotification;
         private readonly TransferService _transferService;
 
         public TransferServiceTests()
         {
             _mockUow = new Mock<IUnitOfWork>();
             _mockInventoryService = new Mock<IInventoryService>();
-            _transferService = new TransferService(_mockUow.Object, _mockInventoryService.Object);
+            _mockCodeGenerator = new Mock<ICodeGeneratorService>();
+            _mockNotification = new Mock<INotificationService>();
+            _transferService = new TransferService(_mockUow.Object, _mockInventoryService.Object, _mockCodeGenerator.Object, _mockNotification.Object);
         }
 
         [Fact]

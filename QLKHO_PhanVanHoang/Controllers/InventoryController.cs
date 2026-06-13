@@ -1,8 +1,10 @@
+using QLKHO_PhanVanHoang.Constants;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using QLKHO_PhanVanHoang.Attributes;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Services;
 using AutoMapper;
@@ -29,6 +31,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet]
+        [HasPermission("REPORT_VIEW")]
         public async Task<IActionResult> GetInventory([FromQuery] int? productId, [FromQuery] int? warehouseId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 15)
         {
             var result = await _unitOfWork.Inventories.GetPagedAsync(
@@ -52,6 +55,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet("stock-cards")]
+        [HasPermission("STOCK_CARD_VIEW")]
         public async Task<IActionResult> GetStockCards([FromQuery] int? productId, [FromQuery] int? warehouseId, [FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 15)
         {
             // Mặc định 30 ngày nếu không truyền
@@ -81,6 +85,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet("stock-check")]
+        [HasPermission("REPORT_VIEW")]
         public async Task<IActionResult> GetProductStock([FromQuery] int productId, [FromQuery] int warehouseId)
         {
             var inventories = await _unitOfWork.Inventories.FindAsync(i => i.ProductId == productId && i.WarehouseId == warehouseId);
@@ -89,7 +94,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpPost("import")]
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("MASTER_DATA_EDIT")]
         public async Task<IActionResult> ImportInventory(IFormFile file)
         {
             var result = await _excelService.ImportInventoryAsync(file);
@@ -103,3 +108,5 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
     }
 }
+
+

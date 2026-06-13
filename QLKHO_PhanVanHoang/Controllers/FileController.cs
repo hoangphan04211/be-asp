@@ -1,3 +1,4 @@
+using QLKHO_PhanVanHoang.Constants;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using QLKHO_PhanVanHoang.Attributes;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Repositories;
 
@@ -24,7 +26,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             _unitOfWork = unitOfWork;
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [Authorize(Roles = AppRoles.AdminOrManager)]
         [HttpPost("upload-product-image/{productId}")]
         public async Task<IActionResult> UploadProductImage(int productId, IFormFile file)
         {
@@ -56,3 +58,5 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
     }
 }
+
+

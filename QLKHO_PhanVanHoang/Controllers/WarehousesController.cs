@@ -1,9 +1,11 @@
+using QLKHO_PhanVanHoang.Constants;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QLKHO_PhanVanHoang.Attributes;
 using QLKHO_PhanVanHoang.DTOs;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Models;
@@ -26,6 +28,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet]
+        [HasPermission("WAREHOUSE_VIEW")]
         public async Task<IActionResult> GetPaged([FromQuery] PaginationParams @params)
         {
             var result = await _unitOfWork.Warehouses.GetPagedAsync(
@@ -46,6 +49,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet("{id}")]
+        [HasPermission("WAREHOUSE_VIEW")]
         public async Task<IActionResult> GetById(int id)
         {
             var warehouse = await _unitOfWork.Warehouses.GetByIdAsync(id);
@@ -54,7 +58,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<WarehouseDto>.SuccessResult(_mapper.Map<WarehouseDto>(warehouse)));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("MASTER_DATA_EDIT")]
         [HttpPost]
         public async Task<IActionResult> Create(CreateWarehouseDto dto)
         {
@@ -64,7 +68,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<WarehouseDto>.SuccessResult(_mapper.Map<WarehouseDto>(warehouse), "Created warehouse successfully"));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("MASTER_DATA_EDIT")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, CreateWarehouseDto dto)
         {
@@ -78,7 +82,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<WarehouseDto>.SuccessResult(_mapper.Map<WarehouseDto>(warehouse), "Updated warehouse successfully"));
         }
 
-        [Authorize(Roles = "Admin")]
+        [HasPermission("MASTER_DATA_EDIT")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -90,7 +94,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<object>.SuccessResult(null, "Deleted warehouse successfully"));
         }
 
-        [Authorize(Roles = "Admin")]
+        [HasPermission("MASTER_DATA_EDIT")]
         [HttpPost("restore/{id}")]
         public async Task<IActionResult> Restore(int id)
         {
@@ -104,3 +108,6 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
     }
 }
+
+
+

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QLKHO_PhanVanHoang.Data;
 
@@ -11,9 +12,11 @@ using QLKHO_PhanVanHoang.Data;
 namespace QLKHO_PhanVanHoang.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260517073129_Add2FAFields")]
+    partial class Add2FAFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -642,7 +645,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 1,
                             Code = "PRODUCT_VIEW",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3463),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2094),
                             CreatedBy = "system",
                             Group = "Sản phẩm",
                             IsDeleted = false,
@@ -653,7 +656,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 2,
                             Code = "PRODUCT_EDIT",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3604),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2115),
                             CreatedBy = "system",
                             Group = "Sản phẩm",
                             IsDeleted = false,
@@ -664,7 +667,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 3,
                             Code = "MASTER_DATA_VIEW",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3610),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2120),
                             CreatedBy = "system",
                             Group = "Danh mục",
                             IsDeleted = false,
@@ -675,7 +678,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 4,
                             Code = "MASTER_DATA_EDIT",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3615),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2124),
                             CreatedBy = "system",
                             Group = "Danh mục",
                             IsDeleted = false,
@@ -686,7 +689,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 5,
                             Code = "WAREHOUSE_VIEW",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3618),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2129),
                             CreatedBy = "system",
                             Group = "Danh mục",
                             IsDeleted = false,
@@ -697,7 +700,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 6,
                             Code = "INBOUND_VIEW",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3641),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2133),
                             CreatedBy = "system",
                             Group = "Vận hành",
                             IsDeleted = false,
@@ -708,7 +711,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 7,
                             Code = "INBOUND_CREATE",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3645),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2138),
                             CreatedBy = "system",
                             Group = "Vận hành",
                             IsDeleted = false,
@@ -719,7 +722,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 8,
                             Code = "INBOUND_APPROVE",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3649),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2142),
                             CreatedBy = "system",
                             Group = "Vận hành",
                             IsDeleted = false,
@@ -730,7 +733,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 9,
                             Code = "OUTBOUND_VIEW",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3655),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2148),
                             CreatedBy = "system",
                             Group = "Vận hành",
                             IsDeleted = false,
@@ -741,7 +744,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 10,
                             Code = "OUTBOUND_CREATE",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3659),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2152),
                             CreatedBy = "system",
                             Group = "Vận hành",
                             IsDeleted = false,
@@ -752,7 +755,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 11,
                             Code = "OUTBOUND_APPROVE",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3662),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2156),
                             CreatedBy = "system",
                             Group = "Vận hành",
                             IsDeleted = false,
@@ -763,7 +766,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 12,
                             Code = "TRANSFER_VIEW",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3666),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2160),
                             CreatedBy = "system",
                             Group = "Vận hành",
                             IsDeleted = false,
@@ -774,7 +777,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 13,
                             Code = "TRANSFER_CREATE",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3670),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2164),
                             CreatedBy = "system",
                             Group = "Vận hành",
                             IsDeleted = false,
@@ -785,7 +788,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 14,
                             Code = "COUNTING_VIEW",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3675),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2168),
                             CreatedBy = "system",
                             Group = "Vận hành",
                             IsDeleted = false,
@@ -796,7 +799,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 15,
                             Code = "COUNTING_APPROVE",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3787),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2298),
                             CreatedBy = "system",
                             Group = "Vận hành",
                             IsDeleted = false,
@@ -807,7 +810,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 16,
                             Code = "REPORT_VIEW",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3793),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2307),
                             CreatedBy = "system",
                             Group = "Báo cáo",
                             IsDeleted = false,
@@ -818,7 +821,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 17,
                             Code = "STOCK_CARD_VIEW",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3797),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2312),
                             CreatedBy = "system",
                             Group = "Báo cáo",
                             IsDeleted = false,
@@ -829,7 +832,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 18,
                             Code = "USER_MANAGEMENT",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3801),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2315),
                             CreatedBy = "system",
                             Group = "Hệ thống",
                             IsDeleted = false,
@@ -840,7 +843,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 19,
                             Code = "SYSTEM_LOGS",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3806),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2319),
                             CreatedBy = "system",
                             Group = "Hệ thống",
                             IsDeleted = false,
@@ -851,7 +854,7 @@ namespace QLKHO_PhanVanHoang.Migrations
                         {
                             Id = 20,
                             Code = "SYSTEM_TRASH",
-                            CreatedAt = new DateTime(2026, 6, 12, 15, 39, 15, 677, DateTimeKind.Local).AddTicks(3810),
+                            CreatedAt = new DateTime(2026, 5, 17, 14, 31, 21, 649, DateTimeKind.Local).AddTicks(2323),
                             CreatedBy = "system",
                             Group = "Hệ thống",
                             IsDeleted = false,
@@ -1323,6 +1326,12 @@ namespace QLKHO_PhanVanHoang.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("RefreshTokenExpiryTime")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("ResetPasswordCode")
                         .HasMaxLength(6)
                         .HasColumnType("varchar(6)");
@@ -1494,66 +1503,6 @@ namespace QLKHO_PhanVanHoang.Migrations
                     b.HasIndex("TransferVoucherId");
 
                     b.ToTable("TransferVoucherDetails");
-                });
-
-            modelBuilder.Entity("QLKHO_PhanVanHoang.Models.UserSession", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("DeviceName")
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("IsRevoked")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("RefreshToken")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("varchar(2000)");
-
-                    b.Property<DateTime>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("timestamp(6)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserSessions");
                 });
 
             modelBuilder.Entity("QLKHO_PhanVanHoang.Models.Warehouse", b =>
@@ -1947,17 +1896,6 @@ namespace QLKHO_PhanVanHoang.Migrations
                     b.Navigation("TransferVoucher");
                 });
 
-            modelBuilder.Entity("QLKHO_PhanVanHoang.Models.UserSession", b =>
-                {
-                    b.HasOne("QLKHO_PhanVanHoang.Models.SystemUser", "User")
-                        .WithMany("Sessions")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("RolePermissions", b =>
                 {
                     b.HasOne("QLKHO_PhanVanHoang.Models.Permission", null)
@@ -2012,11 +1950,6 @@ namespace QLKHO_PhanVanHoang.Migrations
             modelBuilder.Entity("QLKHO_PhanVanHoang.Models.Supplier", b =>
                 {
                     b.Navigation("ReceivingVouchers");
-                });
-
-            modelBuilder.Entity("QLKHO_PhanVanHoang.Models.SystemUser", b =>
-                {
-                    b.Navigation("Sessions");
                 });
 
             modelBuilder.Entity("QLKHO_PhanVanHoang.Models.TransferVoucher", b =>

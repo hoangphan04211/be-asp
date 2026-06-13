@@ -23,5 +23,20 @@ namespace QLKHO_PhanVanHoang.Hubs
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
         }
+
+        public async Task JoinSessionGroup(string sessionId)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"Session_{sessionId}");
+        }
+
+        public async Task JoinUserGroup(string userId)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId}");
+        }
+
+        public async Task JoinRoleGroup(string roleName)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"Role_{roleName}");
+        }
     }
 }

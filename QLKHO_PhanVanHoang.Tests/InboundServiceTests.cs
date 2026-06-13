@@ -34,7 +34,7 @@ namespace QLKHO_PhanVanHoang.Tests
             };
 
             _mockUow.Setup(u => u.ReceivingVouchers.GetByIdAsync(voucherId)).ReturnsAsync(voucher);
-            _mockUow.Setup(u => u.ReceivingVoucherDetails.FindAsync(It.IsAny<Expression<Func<ReceivingVoucherDetail, bool>>>()))
+            _mockUow.Setup(u => u.ReceivingVoucherDetails.FindAsync(It.IsAny<Expression<Func<ReceivingVoucherDetail, bool>>>(), It.IsAny<string>()))
                     .ReturnsAsync(details);
             _mockUow.Setup(u => u.BeginTransactionAsync()).Returns(Task.CompletedTask);
             _mockUow.Setup(u => u.CommitTransactionAsync()).Returns(Task.CompletedTask);

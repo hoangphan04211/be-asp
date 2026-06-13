@@ -40,6 +40,7 @@ namespace QLKHO_PhanVanHoang.Data
         public DbSet<StockCard> StockCards { get; set; } = null!;
         public DbSet<Role> Roles { get; set; } = null!;
         public DbSet<SystemUser> SystemUsers { get; set; } = null!;
+        public DbSet<UserSession> UserSessions { get; set; } = null!;
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
         public DbSet<Permission> Permissions { get; set; } = null!;
 
@@ -219,6 +220,10 @@ namespace QLKHO_PhanVanHoang.Data
             foreach (var entry in ChangeTracker.Entries<BaseEntity>())
             {
                 if (entry.State == EntityState.Detached || entry.State == EntityState.Unchanged)
+                    continue;
+
+                // Loại trừ UserSession để tránh ghi log rác khi Refresh Token
+                if (entry.Entity is UserSession)
                     continue;
 
                 var auditEntry = new AuditEntry(entry)

@@ -12,13 +12,15 @@ namespace QLKHO_PhanVanHoang.Tests
     {
         private readonly Mock<IUnitOfWork> _mockUow;
         private readonly Mock<IInventoryService> _mockInventoryService;
+        private readonly Mock<INotificationService> _mockNotification;
         private readonly OutboundService _outboundService;
 
         public OutboundServiceTests()
         {
             _mockUow = new Mock<IUnitOfWork>();
             _mockInventoryService = new Mock<IInventoryService>();
-            _outboundService = new OutboundService(_mockUow.Object, _mockInventoryService.Object);
+            _mockNotification = new Mock<INotificationService>();
+            _outboundService = new OutboundService(_mockUow.Object, _mockInventoryService.Object, _mockNotification.Object);
         }
 
         [Fact]
@@ -41,7 +43,7 @@ namespace QLKHO_PhanVanHoang.Tests
             var product = new Product { Id = 1, CostPrice = 100 };
 
             var mockDetailRepo = new Mock<IGenericRepository<DeliveryVoucherDetail>>();
-            mockDetailRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<DeliveryVoucherDetail, bool>>>()))
+            mockDetailRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<DeliveryVoucherDetail, bool>>>(), It.IsAny<string>()))
                           .ReturnsAsync(details);
             mockDetailRepo.Setup(r => r.Update(It.IsAny<DeliveryVoucherDetail>()));
 

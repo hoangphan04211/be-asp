@@ -38,6 +38,7 @@ namespace QLKHO_PhanVanHoang.Repositories
             SystemUsers = new GenericRepository<SystemUser>(_context);
             AuditLogs = new GenericRepository<AuditLog>(_context);
             Permissions = new GenericRepository<Permission>(_context);
+            UserSessions = new GenericRepository<UserSession>(_context);
         }
 
         public IGenericRepository<Product> Products { get; private set; }
@@ -63,6 +64,7 @@ namespace QLKHO_PhanVanHoang.Repositories
         public IGenericRepository<SystemUser> SystemUsers { get; private set; }
         public IGenericRepository<AuditLog> AuditLogs { get; private set; }
         public IGenericRepository<Permission> Permissions { get; private set; }
+        public IGenericRepository<UserSession> UserSessions { get; private set; }
         
         public ApplicationDbContext Context => _context;
 

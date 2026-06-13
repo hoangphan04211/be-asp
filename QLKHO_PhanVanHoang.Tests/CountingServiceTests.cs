@@ -12,13 +12,15 @@ namespace QLKHO_PhanVanHoang.Tests
     {
         private readonly Mock<IUnitOfWork> _mockUow;
         private readonly Mock<IInventoryService> _mockInventoryService;
+        private readonly Mock<INotificationService> _mockNotification;
         private readonly CountingService _countingService;
 
         public CountingServiceTests()
         {
             _mockUow = new Mock<IUnitOfWork>();
             _mockInventoryService = new Mock<IInventoryService>();
-            _countingService = new CountingService(_mockUow.Object, _mockInventoryService.Object);
+            _mockNotification = new Mock<INotificationService>();
+            _countingService = new CountingService(_mockUow.Object, _mockInventoryService.Object, _mockNotification.Object);
         }
 
         [Fact]

@@ -1,3 +1,4 @@
+using QLKHO_PhanVanHoang.Constants;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QLKHO_PhanVanHoang.Attributes;
 using QLKHO_PhanVanHoang.DTOs;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Models;
@@ -33,6 +35,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet]
+        [HasPermission("COUNTING_VIEW")]
         public async Task<IActionResult> GetPaged([FromQuery] PaginationParams @params)
         {
             var result = await _unitOfWork.CountingSheets.GetPagedAsync(
@@ -69,6 +72,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet("{id}")]
+        [HasPermission("COUNTING_VIEW")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _unitOfWork.CountingSheets.GetPagedAsync(1, 1, s => s.Id == id, null, "Warehouse,Details.Product");
@@ -84,7 +88,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<CountingSheetDto>.SuccessResult(dto));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager,Employee")]
+        [HasPermission("COUNTING_APPROVE")]
         [HttpPost("draft")]
         public async Task<IActionResult> CreateDraft(CreateCountingSheetDto dto)
         {
@@ -107,7 +111,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<object>.SuccessResult(new { SheetId = sheet.Id, Code = sheet.Code }, "Created draft counting sheet successfully"));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("COUNTING_APPROVE")]
         [HttpPost("approve/{id}")]
         public async Task<IActionResult> Approve(int id)
         {
@@ -122,6 +126,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             }
         }
 
+        [HasPermission("COUNTING_APPROVE")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -136,3 +141,5 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
     }
 }
+
+

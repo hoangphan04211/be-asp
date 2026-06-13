@@ -1,9 +1,11 @@
+using QLKHO_PhanVanHoang.Constants;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QLKHO_PhanVanHoang.Attributes;
 using QLKHO_PhanVanHoang.Helpers;
 using QLKHO_PhanVanHoang.Models;
 using QLKHO_PhanVanHoang.Repositories;
@@ -29,6 +31,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet]
+        [HasPermission("TRANSFER_VIEW")]
         public async Task<IActionResult> GetPaged([FromQuery] PaginationParams @params)
         {
             var result = await _unitOfWork.TransferVouchers.GetPagedAsync(
@@ -65,6 +68,7 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
 
         [HttpGet("{id}")]
+        [HasPermission("TRANSFER_VIEW")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _unitOfWork.TransferVouchers.GetPagedAsync(1, 1, v => v.Id == id, null, "FromWarehouse,ToWarehouse,Details.Product");
@@ -80,7 +84,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<TransferVoucherDto>.SuccessResult(dto));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager,Employee")]
+        [HasPermission("TRANSFER_CREATE")]
         [HttpPost("create")]
         public async Task<IActionResult> CreateTransfer([FromBody] QLKHO_PhanVanHoang.DTOs.CreateTransferDto dto)
         {
@@ -88,7 +92,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             return Ok(ApiResponse<object>.SuccessResult(null, "Created transfer voucher successfully"));
         }
 
-        [Authorize(Roles = "Admin,WarehouseManager")]
+        [HasPermission("TRANSFER_CREATE")]
         [HttpPost("approve/{id}")]
         public async Task<IActionResult> Approve(int id)
         {
@@ -103,6 +107,7 @@ namespace QLKHO_PhanVanHoang.Controllers
             }
         }
 
+        [HasPermission("TRANSFER_CREATE")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -117,3 +122,5 @@ namespace QLKHO_PhanVanHoang.Controllers
         }
     }
 }
+
+
